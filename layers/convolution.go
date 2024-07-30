@@ -1,7 +1,6 @@
 package layers
 
 import (
-	"fmt"
 	"math/rand"
 
 	"gonum.org/v1/gonum/mat"
@@ -17,8 +16,7 @@ type Conv2D struct {
 	filters         []mat.Dense
 	filtersRaw      []mat.Dense // TODO
 
-	lastInput  []mat.Dense
-	lastOutput []mat.Dense
+	SavedMatData
 }
 
 func NewConv2D(kernelSize [2]int, numberOfFilters int, inputSize [2]int, inputChannels int) Conv2D {
@@ -107,26 +105,6 @@ func (layer *Conv2D) PrintFilter(precision int) {
 	PrintMatArray(&layer.filters, precision)
 }
 
-func PrintMatArray(A *[]mat.Dense, precision int) {
-	precision = max(0, precision)
-	precision = min(52, precision)
-	for i := range len(*A) {
-		PrintMat(&(*A)[i], precision)
-		fmt.Println()
-	}
-}
-
-func PrintMat(A *mat.Dense, precision int) {
-	h, w := (*A).Dims()
-	for j := range h {
-		for k := range w {
-			value := (*A).At(j, k)
-			fmt.Printf("%."+fmt.Sprint(precision)+"f ", value)
-		}
-		fmt.Println()
-	}
-}
-
 func (layer *Conv2D) ArrayToConv2DInput(source []float64) []mat.Dense {
 	result := make([]mat.Dense, layer.inputChannels)
 	numPixels := layer.NumPixels()
@@ -143,7 +121,6 @@ func (layer *Conv2D) Forward(input []mat.Dense) []mat.Dense {
 	inputFlatDim := layer.inputSize[0] * layer.inputSize[1]
 
 	layer.lastInput = input
-	layer.lastOutput = nil
 	layer.lastOutput = make([]mat.Dense, 0)
 
 	for f := range layer.numberOfFilters {
@@ -175,15 +152,6 @@ func (layer *Conv2D) FlatOutput() []float64 {
 	var result []float64
 	for i := range layer.numberOfFilters {
 		result = append(result, FlattenMat(&layer.lastOutput[i])...)
-	}
-	return result
-}
-
-func FlattenMat(A *mat.Dense) []float64 {
-	m, _ := (*A).Dims()
-	result := make([]float64, 0)
-	for r := range m {
-		result = append(result, (*A).RawRowView(r)...)
 	}
 	return result
 }
