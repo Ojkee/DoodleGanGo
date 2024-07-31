@@ -1,4 +1,4 @@
-package layers
+package functools
 
 import (
 	"fmt"
@@ -50,6 +50,18 @@ func IsEqualMat(A, B *[]mat.Dense, eps float64) bool {
 					return false
 				}
 			}
+		}
+	}
+	return true
+}
+
+func IsEqualVec(A, B *mat.VecDense, eps float64) bool {
+	if A.Len() != B.Len() {
+		return false
+	}
+	for i := range A.Len() {
+		if math.Abs(A.RawVector().Data[i]-B.RawVector().Data[i]) > eps {
+			return false
 		}
 	}
 	return true

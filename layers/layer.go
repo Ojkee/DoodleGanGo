@@ -6,12 +6,12 @@ type Layer interface {
 	Forward(input interface{}) interface{}
 }
 
-type SavedMatData struct {
+type SavedDataMat struct {
 	lastInput  []mat.Dense
 	lastOutput []mat.Dense
 }
 
-type SavedData struct {
-	lastInput  []float64
-	lastOutput []float64
+type SavedDataVec struct {
+	lastInput  mat.VecDense
+	lastOutput mat.VecDense
 }

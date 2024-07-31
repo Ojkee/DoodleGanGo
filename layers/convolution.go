@@ -4,6 +4,8 @@ import (
 	"math/rand"
 
 	"gonum.org/v1/gonum/mat"
+
+	"DoodleGan/functools"
 )
 
 type Conv2D struct {
@@ -16,7 +18,7 @@ type Conv2D struct {
 	filters         []mat.Dense
 	filtersRaw      []mat.Dense // TODO
 
-	SavedMatData
+	SavedDataMat
 }
 
 func NewConv2D(kernelSize [2]int, numberOfFilters int, inputSize [2]int, inputChannels int) Conv2D {
@@ -102,7 +104,7 @@ func (layer *Conv2D) PrepareFilterToConv(source *mat.Dense) mat.Dense {
 }
 
 func (layer *Conv2D) PrintFilter(precision int) {
-	PrintMatArray(&layer.filters, precision)
+	functools.PrintMatArray(&layer.filters, precision)
 }
 
 func (layer *Conv2D) ArrayToConv2DInput(source []float64) []mat.Dense {
@@ -126,7 +128,7 @@ func (layer *Conv2D) Forward(input []mat.Dense) []mat.Dense {
 	for f := range layer.numberOfFilters {
 		currentConvolved := *mat.NewDense(outHeight*outWidth, 1, nil)
 		for i := range layer.inputChannels {
-			flatInput := *mat.NewVecDense(inputFlatDim, FlattenMat(&input[i]))
+			flatInput := *mat.NewVecDense(inputFlatDim, functools.FlattenMat(&input[i]))
 			currFilter := &layer.filters[f*layer.inputChannels+i]
 			var cm mat.VecDense
 			cm.MulVec(currFilter, &flatInput)
@@ -151,7 +153,7 @@ func (layer *Conv2D) DeflatOutput() []mat.Dense {
 func (layer *Conv2D) FlatOutput() []float64 {
 	var result []float64
 	for i := range layer.numberOfFilters {
-		result = append(result, FlattenMat(&layer.lastOutput[i])...)
+		result = append(result, functools.FlattenMat(&layer.lastOutput[i])...)
 	}
 	return result
 }

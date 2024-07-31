@@ -9,33 +9,33 @@ import (
 type lambda func(i, j int, v float64) float64
 
 type ReLU struct {
-	SavedMatData
+	SavedDataMat
 	lambda
 }
 
 type LeakyReLU struct {
 	alpha float64
-	SavedMatData
+	SavedDataMat
 	lambda
 }
 
 type ELU struct {
 	alpha float64
-	SavedMatData
+	SavedDataMat
 	lambda
 }
 
 type Sigmoid struct {
-	SavedMatData
+	SavedDataMat
 	lambda
 }
 
 type Tanh struct {
-	SavedMatData
+	SavedDataMat
 	lambda
 }
 
-func ApplyOnInput(
+func ApplyOnInputMatDense(
 	act func(i, j int, v float64) float64,
 	input []mat.Dense,
 	dest *[]mat.Dense,
@@ -58,7 +58,7 @@ func NewReLU() ReLU {
 func (layer *ReLU) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastInput = input
 	layer.lastOutput = make([]mat.Dense, len(input))
-	ApplyOnInput(layer.lambda, input, &layer.lastOutput)
+	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
 }
 
@@ -76,7 +76,7 @@ func NewLeakyReLU(alpha float64) LeakyReLU {
 func (layer *LeakyReLU) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastInput = input
 	layer.lastOutput = make([]mat.Dense, len(input))
-	ApplyOnInput(layer.lambda, input, &layer.lastOutput)
+	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
 }
 
@@ -100,7 +100,7 @@ func NewELU(alpha ...float64) ELU {
 func (layer *ELU) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastInput = input
 	layer.lastOutput = make([]mat.Dense, len(input))
-	ApplyOnInput(layer.lambda, input, &layer.lastOutput)
+	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
 }
 
@@ -116,7 +116,7 @@ func NewSigmoid() Sigmoid {
 func (layer *Sigmoid) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastInput = input
 	layer.lastOutput = make([]mat.Dense, len(input))
-	ApplyOnInput(layer.lambda, input, &layer.lastOutput)
+	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
 }
 
@@ -132,6 +132,6 @@ func NewTanh() Tanh {
 func (layer *Tanh) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastInput = input
 	layer.lastOutput = make([]mat.Dense, len(input))
-	ApplyOnInput(layer.lambda, input, &layer.lastOutput)
+	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
 }
