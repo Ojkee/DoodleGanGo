@@ -13,7 +13,8 @@ import (
 // Single filter
 func TestConv2D_1(t *testing.T) {
 	layer := layers.NewConv2D([2]int{3, 3}, 1, [2]int{4, 4}, 1)
-	layer.LoadFilter([]float64{0, -1, 0, -1, 5, -1, 0, -1, 0})
+	filter := []float64{0, -1, 0, -1, 5, -1, 0, -1, 0}
+	layer.LoadFilter(&filter)
 	input := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 	layer.Forward([]mat.Dense{*mat.NewDense(4, 4, input)})
 	if !reflect.DeepEqual(layer.FlatOutput(), []float64{6, 7, 10, 11}) {
@@ -29,7 +30,7 @@ func TestConv2D_2(t *testing.T) {
 		2, 2, 2, 2, 2, 2,
 		1, 2, 3, 4, 5, 6,
 	}
-	layer.LoadFilter(filter)
+	layer.LoadFilter(&filter)
 	layer.Forward([]mat.Dense{
 		*mat.NewDense(2, 3, []float64{1, 2, 3, 4, 5, 6}),
 		*mat.NewDense(2, 3, []float64{3, 3, 3, 3, 3, 3}),
@@ -52,7 +53,7 @@ func TestConv2D_3(t *testing.T) {
 		2, 2,
 		2, 2,
 	}
-	layer.LoadFilter(filter)
+	layer.LoadFilter(&filter)
 	layer.Forward([]mat.Dense{*mat.NewDense(3, 3, []float64{1, 2, 1, 2, 3, 2, 1, 2, 1})})
 
 	if !reflect.DeepEqual(
@@ -83,7 +84,7 @@ func TestConv2D_4(t *testing.T) {
 		1, -1, -1, -1,
 	}
 	layer := layers.NewConv2D([2]int{2, 2}, 3, [2]int{2, 2}, 4)
-	layer.LoadFilter(filter)
+	layer.LoadFilter(&filter)
 
 	input := []float64{
 		1, 2, 3, 4,

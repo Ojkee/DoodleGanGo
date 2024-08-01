@@ -1,6 +1,7 @@
 package layers
 
 import (
+	"fmt"
 	"math/rand"
 
 	"gonum.org/v1/gonum/mat"
@@ -61,15 +62,23 @@ func (layer *Conv2D) InitFilterRandom(minRange, maxRange float64) {
 	layer.filters = newFilter
 }
 
-func (layer *Conv2D) LoadFilter(source []float64) {
+func (layer *Conv2D) LoadFilter(source *[]float64) {
 	numChannels := layer.NumChannels()
 	numPixels := layer.NumPixels()
-	if len(source) != numChannels*numPixels {
-		panic("Source length and dimentions doesn't match")
+	if len(*source) != numChannels*numPixels {
+		mess := fmt.Sprintf(
+			"Source length and dimentions doesn't match: %d * %d * %d * %d != %d",
+			layer.numberOfFilters,
+			layer.inputChannels,
+			layer.kernelSize[0],
+			layer.kernelSize[1],
+			len(*source),
+		)
+		panic(mess)
 	}
 	layer.filters = make([]mat.Dense, numChannels)
 	for i := range numChannels {
-		matValues := source[i*numPixels : i*numPixels+numPixels]
+		matValues := (*source)[i*numPixels : i*numPixels+numPixels]
 		layer.filters[i] = layer.PrepareFilterToConv(
 			mat.NewDense(layer.kernelSize[0], layer.kernelSize[1], matValues),
 		)
