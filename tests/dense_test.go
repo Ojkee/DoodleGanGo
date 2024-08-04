@@ -16,7 +16,7 @@ func TestDenseLayer_1(t *testing.T) {
 	input := *mat.NewVecDense(1, []float64{2})
 	output := layer.Forward(input)
 	target := *mat.NewVecDense(2, []float64{4, 6})
-	if !functools.IsEqualVec(&target, &output, 0.001) {
+	if !functools.IsEqualVec(&target, output, 0.001) {
 		t.Fatal()
 	}
 }
@@ -28,7 +28,7 @@ func TestDenseLayer_2(t *testing.T) {
 	input := *mat.NewVecDense(3, []float64{-4, 8.5, 4})
 	output := layer.Forward(input)
 	target := *mat.NewVecDense(1, []float64{4 + 17 + 16})
-	if !functools.IsEqualVec(&target, &output, 0.001) {
+	if !functools.IsEqualVec(&target, output, 0.001) {
 		t.Fatal()
 	}
 }
@@ -41,7 +41,7 @@ func TestDenseLayer_3(t *testing.T) {
 	input := *mat.NewVecDense(3, []float64{-4, 8.5, 4})
 	output := layer.Forward(input)
 	target := *mat.NewVecDense(1, []float64{4 + 17 + 16 + 1})
-	if !functools.IsEqualVec(&target, &output, 0.001) {
+	if !functools.IsEqualVec(&target, output, 0.001) {
 		t.Fatal()
 	}
 }

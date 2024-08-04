@@ -6,12 +6,12 @@ import (
 
 	"gonum.org/v1/gonum/mat"
 
+	"DoodleGan/conv"
 	"DoodleGan/functools"
-	"DoodleGan/layers"
 )
 
 func TestReLU(t *testing.T) {
-	layer := layers.NewReLU()
+	layer := conv.NewReLU()
 	output := layer.Forward([]mat.Dense{
 		*mat.NewDense(2, 2, []float64{1, -1, -888, 0}),
 		*mat.NewDense(2, 2, []float64{-3, -4, -5, 1}),
@@ -26,7 +26,7 @@ func TestReLU(t *testing.T) {
 }
 
 func TestLeakyReLU(t *testing.T) {
-	layer := layers.NewLeakyReLU(0.1)
+	layer := conv.NewLeakyReLU(0.1)
 	output := layer.Forward([]mat.Dense{
 		*mat.NewDense(2, 2, []float64{1, -1, -888, 0}),
 		*mat.NewDense(2, 2, []float64{-3, -4, -5, 2}),
@@ -41,7 +41,7 @@ func TestLeakyReLU(t *testing.T) {
 }
 
 func TestELU(t *testing.T) {
-	layer := layers.NewELU(0.5)
+	layer := conv.NewELU(0.5)
 	output := layer.Forward([]mat.Dense{
 		*mat.NewDense(2, 2, []float64{1, -1, 0, 10}),
 		*mat.NewDense(2, 2, []float64{-2, 0.1, -10, -0.1}),
@@ -56,7 +56,7 @@ func TestELU(t *testing.T) {
 }
 
 func TestSigmoid(t *testing.T) {
-	layer := layers.NewSigmoid()
+	layer := conv.NewSigmoid()
 	output := layer.Forward([]mat.Dense{
 		*mat.NewDense(2, 2, []float64{-2, -1, 1, 2}),
 		*mat.NewDense(2, 2, []float64{-2000, 2000, 0, 5.999}),
@@ -71,7 +71,7 @@ func TestSigmoid(t *testing.T) {
 }
 
 func TestTanh(t *testing.T) {
-	layer := layers.NewTanh()
+	layer := conv.NewTanh()
 	output := layer.Forward([]mat.Dense{
 		*mat.NewDense(2, 2, []float64{-2, -1, 1, 2}),
 		*mat.NewDense(2, 2, []float64{-20, 2000, 0, 5.999}),

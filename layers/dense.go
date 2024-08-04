@@ -16,7 +16,7 @@ type DenseLayer struct {
 	SavedDataVec
 }
 
-func NewDenseLayer(nInputs, nNeurons int) DenseLayer {
+func NewDenseLayer(nInputs, nNeurons int) *DenseLayer {
 	if nInputs < 0 || nNeurons < 0 {
 		mess := fmt.Sprintf(
 			"Number of inputs ans number of neurons must be positive,\n\thave: %d, %d",
@@ -26,7 +26,7 @@ func NewDenseLayer(nInputs, nNeurons int) DenseLayer {
 		panic(mess)
 	}
 	bias := *mat.NewVecDense(nNeurons, nil)
-	return DenseLayer{
+	return &DenseLayer{
 		nInputs:  nInputs,
 		nNeurons: nNeurons,
 		bias:     bias,
@@ -74,9 +74,9 @@ func (layer *DenseLayer) LoadBias(bias float64) {
 	layer.bias = *mat.NewVecDense(layer.nNeurons, biasSlice)
 }
 
-func (layer *DenseLayer) Forward(input mat.VecDense) mat.VecDense {
+func (layer *DenseLayer) Forward(input mat.VecDense) *mat.VecDense {
 	layer.lastInput = input
 	layer.lastOutput.MulVec(&layer.weights, &input)
 	layer.lastOutput.AddVec(&layer.lastOutput, &layer.bias)
-	return layer.lastOutput
+	return &layer.lastOutput
 }

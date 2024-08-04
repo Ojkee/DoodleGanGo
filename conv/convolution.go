@@ -1,4 +1,4 @@
-package layers
+package conv
 
 import (
 	"fmt"
@@ -10,26 +10,33 @@ import (
 )
 
 type Conv2D struct {
-	kernelSize      [2]int
+	kernelSize      MatSize
 	numberOfFilters int
-	inputSize       [2]int
+	inputSize       MatSize
 	inputChannels   int
-	padding         [4]int // N E S W // TODO
-	stride          [2]int // TODO
-	filters         []mat.Dense
-	filtersRaw      []mat.Dense // TODO
+	padding         Padding
+	stride          Stride
+
+	filters    []mat.Dense
+	filtersRaw []mat.Dense // TODO
 
 	SavedDataMat
 }
 
-func NewConv2D(kernelSize [2]int, numberOfFilters int, inputSize [2]int, inputChannels int) Conv2D {
+func NewConv2D(
+	kernelSize [2]int,
+	numberOfFilters int,
+	inputSize [2]int,
+	inputChannels int,
+	stride [2]int,
+) Conv2D {
 	return Conv2D{
-		kernelSize:      kernelSize,
+		kernelSize:      MatSize{kernelSize[0], kernelSize[1]},
 		numberOfFilters: numberOfFilters,
-		inputSize:       inputSize,
+		inputSize:       MatSize{inputSize[0], inputSize[1]},
 		inputChannels:   inputChannels,
-		padding:         [4]int{0, 0, 0, 0},
-		stride:          [2]int{1, 1},
+		padding:         Padding{0, 0, 0, 0},
+		stride:          Stride{stride[0], stride[1]},
 	}
 }
 
@@ -38,7 +45,7 @@ func (layer *Conv2D) NumChannels() int {
 }
 
 func (layer *Conv2D) NumPixels() int {
-	return layer.kernelSize[0] * layer.kernelSize[1]
+	return layer.kernelSize.height * layer.kernelSize.width
 }
 
 func (layer *Conv2D) InitFilterRandom(minRange, maxRange float64) {
@@ -56,7 +63,7 @@ func (layer *Conv2D) InitFilterRandom(minRange, maxRange float64) {
 		}
 		matValuesCopy := append([]float64{}, matValues...)
 		newFilter[i] = layer.PrepareFilterToConv(
-			mat.NewDense(layer.kernelSize[0], layer.kernelSize[1], matValuesCopy),
+			mat.NewDense(layer.kernelSize.height, layer.kernelSize.width, matValuesCopy),
 		)
 	}
 	layer.filters = newFilter
@@ -70,8 +77,8 @@ func (layer *Conv2D) LoadFilter(source *[]float64) {
 			"Source length and dimentions doesn't match: %d * %d * %d * %d != %d",
 			layer.numberOfFilters,
 			layer.inputChannels,
-			layer.kernelSize[0],
-			layer.kernelSize[1],
+			layer.kernelSize.height,
+			layer.kernelSize.width,
 			len(*source),
 		)
 		panic(mess)
@@ -80,34 +87,34 @@ func (layer *Conv2D) LoadFilter(source *[]float64) {
 	for i := range numChannels {
 		matValues := (*source)[i*numPixels : i*numPixels+numPixels]
 		layer.filters[i] = layer.PrepareFilterToConv(
-			mat.NewDense(layer.kernelSize[0], layer.kernelSize[1], matValues),
+			mat.NewDense(layer.kernelSize.height, layer.kernelSize.width, matValues),
 		)
 	}
 }
 
 func (layer *Conv2D) OutDims() (int, int) {
-	outHeight := layer.inputSize[0] - layer.kernelSize[0] + 1
-	outWidth := layer.inputSize[1] - layer.kernelSize[1] + 1
+	outHeight := layer.inputSize.height - layer.kernelSize.height + 1
+	outWidth := layer.inputSize.width - layer.kernelSize.width + 1
 	return outHeight, outWidth
 }
 
 func (layer *Conv2D) PrepareFilterToConv(source *mat.Dense) mat.Dense {
 	outHeight, outWidth := layer.OutDims()
-	inputFlatDim := layer.inputSize[0] * layer.inputSize[1]
+	inputFlatDim := layer.inputSize.height * layer.inputSize.width
 	convValues := make([]float64, outHeight*outWidth*inputFlatDim)
 
 	rowOffset := 0
 	for range outHeight {
 		for j := range outWidth {
-			for ki := range layer.kernelSize[0] {
-				for kj := range layer.kernelSize[1] {
-					c := rowOffset + j + kj + ki*layer.inputSize[1]
+			for ki := range layer.kernelSize.height {
+				for kj := range layer.kernelSize.width {
+					c := rowOffset + j + kj + ki*layer.inputSize.width
 					convValues[c] = source.At(ki, kj)
 				}
 			}
-			rowOffset += layer.inputSize[0] * layer.inputSize[1]
+			rowOffset += layer.inputSize.height * layer.inputSize.width
 		}
-		rowOffset += layer.inputSize[1]
+		rowOffset += layer.inputSize.width
 	}
 	return *mat.NewDense(outHeight*outWidth, inputFlatDim, convValues)
 }
@@ -121,23 +128,23 @@ func (layer *Conv2D) ArrayToConv2DInput(source []float64) []mat.Dense {
 	numPixels := layer.NumPixels()
 	s := 0
 	for i := range layer.inputChannels {
-		result[i] = *mat.NewDense(layer.inputSize[0], layer.inputSize[1], source[s:s+numPixels])
+		result[i] = *mat.NewDense(layer.inputSize.height, layer.inputSize.width, source[s:s+numPixels])
 		s += numPixels
 	}
 	return result
 }
 
-func (layer *Conv2D) Forward(input []mat.Dense) []mat.Dense {
+func (layer *Conv2D) Forward(input *[]mat.Dense) *[]mat.Dense {
 	outHeight, outWidth := layer.OutDims()
-	inputFlatDim := layer.inputSize[0] * layer.inputSize[1]
+	inputFlatDim := layer.inputSize.height * layer.inputSize.width
 
-	layer.lastInput = input
+	layer.lastInput = *input
 	layer.lastOutput = make([]mat.Dense, 0)
 
 	for f := range layer.numberOfFilters {
 		currentConvolved := *mat.NewDense(outHeight*outWidth, 1, nil)
 		for i := range layer.inputChannels {
-			flatInput := *mat.NewVecDense(inputFlatDim, functools.FlattenMat(&input[i]))
+			flatInput := *mat.NewVecDense(inputFlatDim, functools.FlattenMat(&(*input)[i]))
 			currFilter := &layer.filters[f*layer.inputChannels+i]
 			var cm mat.VecDense
 			cm.MulVec(currFilter, &flatInput)
@@ -145,24 +152,23 @@ func (layer *Conv2D) Forward(input []mat.Dense) []mat.Dense {
 		}
 		layer.lastOutput = append(layer.lastOutput, currentConvolved)
 	}
-
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *Conv2D) DeflatOutput() []mat.Dense {
+func (layer *Conv2D) DeflatOutput() *[]mat.Dense {
 	outHeight, outWidth := layer.OutDims()
 	result := make([]mat.Dense, 0)
 	for i := range layer.lastOutput {
 		reshaped := mat.NewDense(outHeight, outWidth, layer.lastOutput[i].RawMatrix().Data)
 		result = append(result, *reshaped)
 	}
-	return result
+	return &result
 }
 
-func (layer *Conv2D) FlatOutput() []float64 {
+func (layer *Conv2D) FlatOutput() *[]float64 {
 	var result []float64
 	for i := range layer.numberOfFilters {
 		result = append(result, functools.FlattenMat(&layer.lastOutput[i])...)
 	}
-	return result
+	return &result
 }

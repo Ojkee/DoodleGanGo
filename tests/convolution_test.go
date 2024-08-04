@@ -6,18 +6,18 @@ import (
 
 	"gonum.org/v1/gonum/mat"
 
-	"DoodleGan/layers"
+	"DoodleGan/conv"
 )
 
 // Single input
 // Single filter
 func TestConv2D_1(t *testing.T) {
-	layer := layers.NewConv2D([2]int{3, 3}, 1, [2]int{4, 4}, 1)
+	layer := conv.NewConv2D([2]int{3, 3}, 1, [2]int{4, 4}, 1, [2]int{1, 1})
 	filter := []float64{0, -1, 0, -1, 5, -1, 0, -1, 0}
 	layer.LoadFilter(&filter)
 	input := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	layer.Forward([]mat.Dense{*mat.NewDense(4, 4, input)})
-	if !reflect.DeepEqual(layer.FlatOutput(), []float64{6, 7, 10, 11}) {
+	layer.Forward(&[]mat.Dense{*mat.NewDense(4, 4, input)})
+	if !reflect.DeepEqual(*layer.FlatOutput(), []float64{6, 7, 10, 11}) {
 		t.Fatal()
 	}
 }
@@ -25,18 +25,18 @@ func TestConv2D_1(t *testing.T) {
 // Multi input
 // Single filter
 func TestConv2D_2(t *testing.T) {
-	layer := layers.NewConv2D([2]int{2, 3}, 1, [2]int{2, 3}, 2)
+	layer := conv.NewConv2D([2]int{2, 3}, 1, [2]int{2, 3}, 2, [2]int{1, 1})
 	filter := []float64{
 		2, 2, 2, 2, 2, 2,
 		1, 2, 3, 4, 5, 6,
 	}
 	layer.LoadFilter(&filter)
-	layer.Forward([]mat.Dense{
+	layer.Forward(&[]mat.Dense{
 		*mat.NewDense(2, 3, []float64{1, 2, 3, 4, 5, 6}),
 		*mat.NewDense(2, 3, []float64{3, 3, 3, 3, 3, 3}),
 	})
 
-	if !reflect.DeepEqual(layer.FlatOutput(), []float64{105}) {
+	if !reflect.DeepEqual(*layer.FlatOutput(), []float64{105}) {
 		t.Fatal()
 	}
 }
@@ -44,7 +44,7 @@ func TestConv2D_2(t *testing.T) {
 // Single input
 // Multi filter
 func TestConv2D_3(t *testing.T) {
-	layer := layers.NewConv2D([2]int{2, 2}, 3, [2]int{3, 3}, 1)
+	layer := conv.NewConv2D([2]int{2, 2}, 3, [2]int{3, 3}, 1, [2]int{1, 1})
 	filter := []float64{
 		1, 1,
 		1, 1,
@@ -54,10 +54,10 @@ func TestConv2D_3(t *testing.T) {
 		2, 2,
 	}
 	layer.LoadFilter(&filter)
-	layer.Forward([]mat.Dense{*mat.NewDense(3, 3, []float64{1, 2, 1, 2, 3, 2, 1, 2, 1})})
+	layer.Forward(&[]mat.Dense{*mat.NewDense(3, 3, []float64{1, 2, 1, 2, 3, 2, 1, 2, 1})})
 
 	if !reflect.DeepEqual(
-		layer.FlatOutput(),
+		*layer.FlatOutput(),
 		[]float64{8, 8, 8, 8, -8, -8, -8, -8, 16, 16, 16, 16},
 	) {
 		t.Fatal()
@@ -83,7 +83,7 @@ func TestConv2D_4(t *testing.T) {
 		1, 0, 1, 0,
 		1, -1, -1, -1,
 	}
-	layer := layers.NewConv2D([2]int{2, 2}, 3, [2]int{2, 2}, 4)
+	layer := conv.NewConv2D([2]int{2, 2}, 3, [2]int{2, 2}, 4, [2]int{1, 1})
 	layer.LoadFilter(&filter)
 
 	input := []float64{
@@ -93,9 +93,12 @@ func TestConv2D_4(t *testing.T) {
 		0, 5, 0, -1,
 	}
 	propperInput := layer.ArrayToConv2DInput(input)
-	layer.Forward(propperInput)
+	layer.Forward(&propperInput)
 	target := []float64{4, 19, 4}
-	if !reflect.DeepEqual(target, layer.FlatOutput()) {
+	if !reflect.DeepEqual(target, *layer.FlatOutput()) {
 		t.Fatal()
 	}
+}
+
+func TestConv2D_Stride_1(t *testing.T) {
 }

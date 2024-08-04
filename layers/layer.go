@@ -3,12 +3,7 @@ package layers
 import "gonum.org/v1/gonum/mat"
 
 type Layer interface {
-	Forward(input interface{}) interface{}
-}
-
-type SavedDataMat struct {
-	lastInput  []mat.Dense
-	lastOutput []mat.Dense
+	Forward(input *mat.VecDense) *mat.VecDense
 }
 
 type SavedDataVec struct {
