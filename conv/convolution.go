@@ -140,11 +140,11 @@ func (layer *Conv2D) PrintFilter(precision int) {
 
 func (layer *Conv2D) ArrayToConv2DInput(source []float64) []mat.Dense {
 	result := make([]mat.Dense, layer.inputChannels)
-	numPiselsInput := layer.NumPixelsInput()
+	numPixelsInput := layer.NumPixelsInput()
 	s := 0
 	for i := range layer.inputChannels {
-		result[i] = *mat.NewDense(layer.inputSize.height, layer.inputSize.width, source[s:s+numPiselsInput])
-		s += numPiselsInput
+		result[i] = *mat.NewDense(layer.inputSize.height, layer.inputSize.width, source[s:s+numPixelsInput])
+		s += numPixelsInput
 	}
 	return result
 }
