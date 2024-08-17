@@ -1,10 +1,11 @@
 package main
 
-import (
-	"fmt"
-	"runtime"
-)
+import "fmt"
 
 func main() {
-	fmt.Println(runtime.NumCPU())
+	// _, test, err := preprocess.GetSplitData("../tornado.npy", 2, 784, 0.5)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	fmt.Println("Hello")
 }

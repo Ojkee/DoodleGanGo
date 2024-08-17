@@ -53,8 +53,8 @@ func (layer *DenseLayer) LoadWeights(source *[]float64) {
 	if len(*source) != layer.nInputs*layer.nNeurons {
 		mess := fmt.Sprintf(
 			"Source length and dimentions doesn't match: %d * %d != %d",
-			layer.nInputs,
 			layer.nNeurons,
+			layer.nInputs,
 			len(*source),
 		)
 		panic(mess)
@@ -79,4 +79,8 @@ func (layer *DenseLayer) Forward(input mat.VecDense) *mat.VecDense {
 	layer.lastOutput.MulVec(&layer.weights, &input)
 	layer.lastOutput.AddVec(&layer.lastOutput, &layer.bias)
 	return &layer.lastOutput
+}
+
+func (layer *DenseLayer) Backward(nextGradients mat.VecDense) *mat.Dense {
+	return nil
 }
