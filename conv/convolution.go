@@ -89,12 +89,13 @@ func (layer *Conv2D) GetPaddedInputSize() MatSize {
 }
 
 func (layer *Conv2D) GetFlatInputDim() int {
-	return (layer.inputSize.height +
+	horizontal := layer.inputSize.height +
 		layer.padding.up +
-		layer.padding.down) *
-		(layer.inputSize.width +
-			layer.padding.left +
-			layer.padding.right)
+		layer.padding.down
+	vertical := layer.inputSize.width +
+		layer.padding.left +
+		layer.padding.right
+	return horizontal * vertical
 }
 
 func (layer *Conv2D) GetFlatOutputDim() int {

@@ -7,7 +7,11 @@ type Layer interface {
 }
 
 type SavedDataVec struct {
-	lastInput     mat.VecDense
-	lastOutput    mat.VecDense
-	lastGradients mat.VecDense
+	lastInput  mat.VecDense
+	lastOutput mat.VecDense
+}
+
+type SavedGradsVec struct {
+	lastInGrads  mat.VecDense
+	lastOutGrads mat.VecDense
 }

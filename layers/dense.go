@@ -7,13 +7,19 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+type SavedParamGrads struct {
+	weightGrads mat.Dense
+}
+
 type DenseLayer struct {
 	nInputs  int
 	nNeurons int
 	weights  mat.Dense
+	bias     mat.VecDense
 
-	bias mat.VecDense
 	SavedDataVec
+	SavedGradsVec
+	SavedParamGrads
 }
 
 func NewDenseLayer(nInputs, nNeurons int) *DenseLayer {
@@ -66,12 +72,16 @@ func (layer *DenseLayer) LoadWeights(source *[]float64) {
 	)
 }
 
-func (layer *DenseLayer) LoadBias(bias float64) {
-	biasSlice := make([]float64, layer.nNeurons)
-	for i := range layer.nNeurons {
-		biasSlice[i] = bias
+func (layer *DenseLayer) LoadBias(bias *[]float64) {
+	if len(*bias) != layer.nNeurons {
+		mess := fmt.Sprintf(
+			"Bias length (%d) and number of neurons (%d) must be the same\n",
+			len(*bias),
+			layer.nNeurons,
+		)
+		panic(mess)
 	}
-	layer.bias = *mat.NewVecDense(layer.nNeurons, biasSlice)
+	layer.bias = *mat.NewVecDense(layer.nNeurons, *bias)
 }
 
 func (layer *DenseLayer) Forward(input mat.VecDense) *mat.VecDense {
@@ -81,6 +91,31 @@ func (layer *DenseLayer) Forward(input mat.VecDense) *mat.VecDense {
 	return &layer.lastOutput
 }
 
-func (layer *DenseLayer) Backward(nextGradients mat.VecDense) *mat.Dense {
-	return nil
+func (layer *DenseLayer) Backward(inGradients mat.VecDense) *mat.VecDense {
+	layer.lastInGrads = inGradients
+	layer.weightGrads.Mul(&inGradients, layer.lastInput.T())
+
+	var result mat.VecDense
+	weightsT := layer.weights.T()
+	result.MulVec(weightsT, &inGradients)
+	layer.lastOutGrads = result
+	return &layer.lastOutGrads
+}
+
+func (layer *DenseLayer) GetLastWeightGrads() *mat.Dense {
+	return &layer.weightGrads
+}
+
+func (layer *DenseLayer) GetLastBiasGrads() *mat.VecDense {
+	return &layer.lastInGrads
+}
+
+func (layer *DenseLayer) ApplyGradients(learningRate float64) {
+	var scaledGrads mat.Dense
+	scaledGrads.Scale(learningRate, &layer.weightGrads)
+	layer.weights.Sub(&layer.weights, &scaledGrads)
+}
+
+func (layer *DenseLayer) GetWeightsData() []float64 {
+	return layer.weights.RawMatrix().Data
 }
