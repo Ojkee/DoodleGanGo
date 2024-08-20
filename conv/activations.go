@@ -45,15 +45,30 @@ type Tanh struct {
 
 func ApplyOnInputMatDense(
 	act func(i, j int, v float64) float64,
-	input []mat.Dense,
+	source []mat.Dense,
 	dest *[]mat.Dense,
 ) {
-	for i := range len(input) {
+	for i := range len(source) {
 		(*dest)[i].Apply(
 			act,
-			&input[i],
+			&source[i],
 		)
 	}
+}
+
+func BackwardApply(
+	actPrime func(i, j int, v float64) float64,
+	lastInput, inGrads []mat.Dense,
+) []mat.Dense {
+	result := make([]mat.Dense, len(lastInput))
+	for i := range len(lastInput) {
+		result[i].Apply(
+			actPrime,
+			&lastInput[i],
+		)
+		result[i].MulElem(&result[i], &inGrads[i])
+	}
+	return result
 }
 
 func NewReLU() ReLU {
@@ -81,6 +96,10 @@ func (layer *ReLU) Forward(input []mat.Dense) []mat.Dense {
 	return layer.lastOutput
 }
 
+func (layer *ReLU) Backward(inGrads []mat.Dense) []mat.Dense {
+	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+}
+
 func NewLeakyReLU(alpha float64) LeakyReLU {
 	if alpha < 0 || alpha > 1 {
 		panic("Parameter alpha in LeakyReLU must be in range [0, 1]")
@@ -106,6 +125,10 @@ func (layer *LeakyReLU) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastOutput = make([]mat.Dense, len(input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
+}
+
+func (layer *LeakyReLU) Backward(inGrads []mat.Dense) []mat.Dense {
+	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
 }
 
 func NewELU(alpha ...float64) ELU {
@@ -141,6 +164,10 @@ func (layer *ELU) Forward(input []mat.Dense) []mat.Dense {
 	return layer.lastOutput
 }
 
+func (layer *ELU) Backward(inGrads []mat.Dense) []mat.Dense {
+	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+}
+
 func NewSigmoid() Sigmoid {
 	act := func(i, j int, v float64) float64 {
 		return 1 / (1 + math.Exp(-v))
@@ -163,6 +190,10 @@ func (layer *Sigmoid) Forward(input []mat.Dense) []mat.Dense {
 	return layer.lastOutput
 }
 
+func (layer *Sigmoid) Backward(inGrads []mat.Dense) []mat.Dense {
+	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+}
+
 func NewTanh() Tanh {
 	act := func(i, j int, v float64) float64 {
 		return math.Tanh(v)
@@ -183,4 +214,8 @@ func (layer *Tanh) Forward(input []mat.Dense) []mat.Dense {
 	layer.lastOutput = make([]mat.Dense, len(input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
 	return layer.lastOutput
+}
+
+func (layer *Tanh) Backward(inGrads []mat.Dense) []mat.Dense {
+	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
 }
