@@ -11,9 +11,40 @@ type (
 	VlambdaPrime func(v float64) float64
 )
 
-type ActivationsLambdas struct {
+type VActivationsLambdas struct {
 	Vlambda
 	VlambdaPrime
+}
+
+type Softmax struct {
+	SavedDataVec
+}
+
+type VReLU struct {
+	SavedDataVec
+	VActivationsLambdas
+}
+
+type VLeakyReLU struct {
+	alpha float64
+	SavedDataVec
+	VActivationsLambdas
+}
+
+type VELU struct {
+	alpha float64
+	SavedDataVec
+	VActivationsLambdas
+}
+
+type VSigmoid struct {
+	SavedDataVec
+	VActivationsLambdas
+}
+
+type VTanh struct {
+	SavedDataVec
+	VActivationsLambdas
 }
 
 func ApplyOnInputVec(
@@ -29,15 +60,12 @@ func ApplyOnInputVec(
 
 func BackwardApply(
 	actPrime func(v float64) float64,
-	inGrads mat.VecDense,
+	lastInput, inGrads mat.VecDense,
 ) mat.VecDense {
 	result := mat.NewVecDense(inGrads.Len(), nil)
-	ApplyOnInputVec(actPrime, inGrads, result)
+	ApplyOnInputVec(actPrime, lastInput, result)
+	result.MulElemVec(result, inGrads.SliceVec(0, inGrads.Len()))
 	return *result
-}
-
-type Softmax struct {
-	SavedDataVec
 }
 
 func NewSoftmax() Softmax {
@@ -55,11 +83,6 @@ func (layer *Softmax) Forward(input mat.VecDense) mat.VecDense {
 	return layer.lastOutput
 }
 
-type VReLU struct {
-	SavedDataVec
-	ActivationsLambdas
-}
-
 func NewVReLU() VReLU {
 	act := func(v float64) float64 {
 		return max(0, v)
@@ -71,7 +94,7 @@ func NewVReLU() VReLU {
 		return 0
 	}
 	return VReLU{
-		ActivationsLambdas: ActivationsLambdas{
+		VActivationsLambdas: VActivationsLambdas{
 			Vlambda:      act,
 			VlambdaPrime: actPrime,
 		},
@@ -86,13 +109,7 @@ func (layer *VReLU) Forward(input mat.VecDense) mat.VecDense {
 }
 
 func (layer *VReLU) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, inGrads)
-}
-
-type VLeakyReLU struct {
-	alpha float64
-	SavedDataVec
-	ActivationsLambdas
+	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
 }
 
 func NewVLeakyReLU(alpha float64) VLeakyReLU {
@@ -108,7 +125,7 @@ func NewVLeakyReLU(alpha float64) VLeakyReLU {
 	}
 	return VLeakyReLU{
 		alpha: alpha,
-		ActivationsLambdas: ActivationsLambdas{
+		VActivationsLambdas: VActivationsLambdas{
 			Vlambda:      act,
 			VlambdaPrime: actPrime,
 		},
@@ -123,13 +140,7 @@ func (layer *VLeakyReLU) Forward(input mat.VecDense) mat.VecDense {
 }
 
 func (layer *VLeakyReLU) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, inGrads)
-}
-
-type VELU struct {
-	alpha float64
-	SavedDataVec
-	ActivationsLambdas
+	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
 }
 
 func NewVELU(alpha ...float64) VELU {
@@ -151,7 +162,7 @@ func NewVELU(alpha ...float64) VELU {
 	}
 	return VELU{
 		alpha: param,
-		ActivationsLambdas: ActivationsLambdas{
+		VActivationsLambdas: VActivationsLambdas{
 			Vlambda:      act,
 			VlambdaPrime: actPrime,
 		},
@@ -166,12 +177,7 @@ func (layer *VELU) Forward(input mat.VecDense) mat.VecDense {
 }
 
 func (layer *VELU) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, inGrads)
-}
-
-type VSigmoid struct {
-	SavedDataVec
-	ActivationsLambdas
+	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
 }
 
 func NewVSigmoid() VSigmoid {
@@ -182,7 +188,7 @@ func NewVSigmoid() VSigmoid {
 		return act(v) * (1.0 - act(v))
 	}
 	return VSigmoid{
-		ActivationsLambdas: ActivationsLambdas{
+		VActivationsLambdas: VActivationsLambdas{
 			Vlambda:      act,
 			VlambdaPrime: actPrime,
 		},
@@ -197,12 +203,7 @@ func (layer *VSigmoid) Forward(input mat.VecDense) mat.VecDense {
 }
 
 func (layer *VSigmoid) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, inGrads)
-}
-
-type VTanh struct {
-	SavedDataVec
-	ActivationsLambdas
+	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
 }
 
 func NewVTanh() VTanh {
@@ -213,7 +214,7 @@ func NewVTanh() VTanh {
 		return 1.0 - math.Pow(math.Tanh(v), 2)
 	}
 	return VTanh{
-		ActivationsLambdas: ActivationsLambdas{
+		VActivationsLambdas: VActivationsLambdas{
 			Vlambda:      act,
 			VlambdaPrime: actPrime,
 		},
@@ -228,5 +229,5 @@ func (layer *VTanh) Forward(input mat.VecDense) mat.VecDense {
 }
 
 func (layer *VTanh) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, inGrads)
+	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
 }

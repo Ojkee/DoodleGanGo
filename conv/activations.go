@@ -6,33 +6,41 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-type lambda func(i, j int, v float64) float64
+type (
+	lambda      func(i, j int, v float64) float64
+	lambdaPrime func(i, j int, v float64) float64
+)
+
+type ActivationsLambdas struct {
+	lambda
+	lambdaPrime
+}
 
 type ReLU struct {
 	SavedDataMat
-	lambda
+	ActivationsLambdas
 }
 
 type LeakyReLU struct {
 	alpha float64
 	SavedDataMat
-	lambda
+	ActivationsLambdas
 }
 
 type ELU struct {
 	alpha float64
 	SavedDataMat
-	lambda
+	ActivationsLambdas
 }
 
 type Sigmoid struct {
 	SavedDataMat
-	lambda
+	ActivationsLambdas
 }
 
 type Tanh struct {
 	SavedDataMat
-	lambda
+	ActivationsLambdas
 }
 
 func ApplyOnInputMatDense(
@@ -52,7 +60,18 @@ func NewReLU() ReLU {
 	act := func(i, j int, v float64) float64 {
 		return max(0, v)
 	}
-	return ReLU{lambda: act}
+	actPrime := func(i, j int, v float64) float64 {
+		if v > 0 {
+			return 1.0
+		}
+		return 0
+	}
+	return ReLU{
+		ActivationsLambdas: ActivationsLambdas{
+			lambda:      act,
+			lambdaPrime: actPrime,
+		},
+	}
 }
 
 func (layer *ReLU) Forward(input []mat.Dense) []mat.Dense {
@@ -67,9 +86,18 @@ func NewLeakyReLU(alpha float64) LeakyReLU {
 		panic("Parameter alpha in LeakyReLU must be in range [0, 1]")
 	}
 	act := func(i, j int, v float64) float64 { return max(v*alpha, v) }
+	actPrime := func(i, j int, v float64) float64 {
+		if v > 0.0 {
+			return 1.0
+		}
+		return alpha
+	}
 	return LeakyReLU{
-		alpha:  alpha,
-		lambda: act,
+		alpha: alpha,
+		ActivationsLambdas: ActivationsLambdas{
+			lambda:      act,
+			lambdaPrime: actPrime,
+		},
 	}
 }
 
@@ -91,9 +119,18 @@ func NewELU(alpha ...float64) ELU {
 		}
 		return param * (math.Exp(v) - 1)
 	}
+	actPrime := func(i, j int, v float64) float64 {
+		if v > 0.0 {
+			return 1.0
+		}
+		return param * math.Exp(v)
+	}
 	return ELU{
-		alpha:  param,
-		lambda: act,
+		alpha: param,
+		ActivationsLambdas: ActivationsLambdas{
+			lambda:      act,
+			lambdaPrime: actPrime,
+		},
 	}
 }
 
@@ -108,8 +145,14 @@ func NewSigmoid() Sigmoid {
 	act := func(i, j int, v float64) float64 {
 		return 1 / (1 + math.Exp(-v))
 	}
+	actPrime := func(i, j int, v float64) float64 {
+		return act(i, j, v) * (1.0 - act(i, j, v))
+	}
 	return Sigmoid{
-		lambda: act,
+		ActivationsLambdas: ActivationsLambdas{
+			lambda:      act,
+			lambdaPrime: actPrime,
+		},
 	}
 }
 
@@ -124,8 +167,14 @@ func NewTanh() Tanh {
 	act := func(i, j int, v float64) float64 {
 		return math.Tanh(v)
 	}
+	actPrime := func(i, j int, v float64) float64 {
+		return 1.0 - math.Pow(math.Tanh(v), 2)
+	}
 	return Tanh{
-		lambda: act,
+		ActivationsLambdas: ActivationsLambdas{
+			lambda:      act,
+			lambdaPrime: actPrime,
+		},
 	}
 }
 

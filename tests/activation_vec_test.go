@@ -41,8 +41,12 @@ func TestVReLU(t *testing.T) {
 
 func TestVReLU_Backward(t *testing.T) {
 	layer := layers.NewVReLU()
-	inGrads1 := *mat.NewVecDense(4, []float64{
+	input1 := *mat.NewVecDense(4, []float64{
 		1, -1, -888, 3,
+	})
+	layer.Forward(input1)
+	inGrads1 := *mat.NewVecDense(4, []float64{
+		1, 1, 1, 1,
 	})
 	output1 := layer.Backward(inGrads1)
 	target1 := []float64{
@@ -54,10 +58,14 @@ func TestVReLU_Backward(t *testing.T) {
 		t.Fatal()
 	}
 
-	inGrads2 := *mat.NewVecDense(4, []float64{-3, -4, -5, 1})
+	input2 := *mat.NewVecDense(4, []float64{-3, -4, -5, 1})
+	layer.Forward(input2)
+	inGrads2 := *mat.NewVecDense(4, []float64{
+		1, 2, 3, 4,
+	})
 	output2 := layer.Backward(inGrads2)
 	target2 := []float64{
-		0, 0, 0, 1,
+		0, 0, 0, 4,
 	}
 	if !reflect.DeepEqual(output2.RawVector().Data, target2) {
 		fmt.Println(output2.RawVector().Data)
@@ -82,10 +90,14 @@ func TestVLeakyReLU(t *testing.T) {
 
 func TestVLeakyReLU_Backward(t *testing.T) {
 	layer := layers.NewVLeakyReLU(0.25)
-	inGrads := *mat.NewVecDense(4, []float64{
+	input1 := *mat.NewVecDense(4, []float64{
 		1, -1, -888, 3,
 	})
-	output1 := layer.Backward(inGrads)
+	layer.Forward(input1)
+	inGrads1 := *mat.NewVecDense(4, []float64{
+		1, 1, 1, 1,
+	})
+	output1 := layer.Backward(inGrads1)
 	target1 := []float64{
 		1, 0.25, 0.25, 1,
 	}
@@ -94,10 +106,14 @@ func TestVLeakyReLU_Backward(t *testing.T) {
 		fmt.Println(target1)
 		t.Fatal()
 	}
-	inGrads2 := *mat.NewVecDense(4, []float64{-3, -4, -5, 1})
+	input2 := *mat.NewVecDense(4, []float64{-3, -4, -5, 1})
+	layer.Forward(input2)
+	inGrads2 := *mat.NewVecDense(4, []float64{
+		1, 2, 3, 4,
+	})
 	output2 := layer.Backward(inGrads2)
 	target2 := []float64{
-		0.25, 0.25, 0.25, 1,
+		0.25, 0.50, 0.75, 4,
 	}
 	if !reflect.DeepEqual(output2.RawVector().Data, target2) {
 		fmt.Println(output2.RawVector().Data)
@@ -122,10 +138,14 @@ func TestVELU(t *testing.T) {
 
 func TestVELU_Backward(t *testing.T) {
 	layer := layers.NewVELU(0.25)
-	inGrads := *mat.NewVecDense(4, []float64{
+	input1 := *mat.NewVecDense(4, []float64{
 		1, -1, 0, 10,
 	})
-	output1 := layer.Backward(inGrads)
+	layer.Forward(input1)
+	inGrads1 := *mat.NewVecDense(4, []float64{
+		1, 1, 1, 1,
+	})
+	output1 := layer.Backward(inGrads1)
 	target1 := *mat.NewVecDense(4, []float64{
 		1, 0.09196986, 0.25, 1,
 	})
@@ -134,10 +154,14 @@ func TestVELU_Backward(t *testing.T) {
 		fmt.Println(target1)
 		t.Fatal()
 	}
-	inGrads2 := *mat.NewVecDense(4, []float64{-3, -4, -5, 1})
+	input2 := *mat.NewVecDense(4, []float64{-3, -4, -5, 1})
+	layer.Forward(input2)
+	inGrads2 := *mat.NewVecDense(4, []float64{
+		1, 2, 3, 4,
+	})
 	output2 := layer.Backward(inGrads2)
 	target2 := *mat.NewVecDense(4, []float64{
-		0.012446767, 0.00457891, 0.001684487, 1,
+		0.012446767 * 1, 0.00457891 * 2, 0.001684487 * 3, 1 * 4,
 	})
 	if !functools.IsEqualVec(&target2, &output2, 0.001) {
 		fmt.Println(output2.RawVector().Data)
@@ -162,10 +186,14 @@ func TestVSigmoid(t *testing.T) {
 
 func TestVSigmoid_Backward(t *testing.T) {
 	layer := layers.NewVSigmoid()
-	inGrads := *mat.NewVecDense(4, []float64{
+	input1 := *mat.NewVecDense(4, []float64{
 		-2, -1, 1, 2,
 	})
-	output1 := layer.Backward(inGrads)
+	layer.Forward(input1)
+	inGrads1 := *mat.NewVecDense(4, []float64{
+		1, 1, 1, 1,
+	})
+	output1 := layer.Backward(inGrads1)
 	target1 := *mat.NewVecDense(4, []float64{
 		0.104993585, 0.196611933, 0.196611933, 0.104993585,
 	})
@@ -174,12 +202,16 @@ func TestVSigmoid_Backward(t *testing.T) {
 		fmt.Println(target1)
 		t.Fatal()
 	}
-	inGrads2 := *mat.NewVecDense(4, []float64{
+	input2 := *mat.NewVecDense(4, []float64{
 		-2000, 2000, 0, 5.999,
+	})
+	layer.Forward(input2)
+	inGrads2 := *mat.NewVecDense(4, []float64{
+		1, 2, 3, 4,
 	})
 	output2 := layer.Backward(inGrads2)
 	target2 := *mat.NewVecDense(4, []float64{
-		0, 0, 0.25, 0.002468965,
+		0, 0, 0.75, 0.002468965 * 4,
 	})
 	if !functools.IsEqualVec(&output2, &target2, 0.001) {
 		fmt.Println(output2.RawVector().Data)
@@ -204,10 +236,14 @@ func TestVTanh(t *testing.T) {
 
 func TestVTanh_Backward(t *testing.T) {
 	layer := layers.NewVTanh()
-	inGrads := *mat.NewVecDense(4, []float64{
+	input1 := *mat.NewVecDense(4, []float64{
 		-2, -1, 1, 2,
 	})
-	output1 := layer.Backward(inGrads)
+	layer.Forward(input1)
+	inGrads1 := *mat.NewVecDense(4, []float64{
+		1, 1, 1, 1,
+	})
+	output1 := layer.Backward(inGrads1)
 	target1 := *mat.NewVecDense(4, []float64{
 		0.070650825, 0.419974342, 0.419974342, 0.070650825,
 	})
@@ -216,12 +252,16 @@ func TestVTanh_Backward(t *testing.T) {
 		fmt.Println(target1)
 		t.Fatal()
 	}
-	inGrads2 := *mat.NewVecDense(4, []float64{
+	input2 := *mat.NewVecDense(4, []float64{
 		-2000, 2000, 0, 5.999,
+	})
+	layer.Forward(input2)
+	inGrads2 := *mat.NewVecDense(4, []float64{
+		1, 2, 3, 4,
 	})
 	output2 := layer.Backward(inGrads2)
 	target2 := *mat.NewVecDense(4, []float64{
-		0, 0, 1, 0.000024626,
+		0, 0, 3, 0.000024626 * 4,
 	})
 	if !functools.IsEqualVec(&output2, &target2, 0.001) {
 		fmt.Println(output2.RawVector().Data)
