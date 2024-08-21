@@ -57,3 +57,7 @@ func GetDeflatOutput(layer *ConvType) *[]mat.Dense {
 	}
 	return &result
 }
+
+func (size *MatSize) FlatDim() int {
+	return size.height * size.width
+}

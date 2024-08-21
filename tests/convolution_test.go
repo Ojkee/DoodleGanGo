@@ -309,3 +309,56 @@ func TestConv2D_All_1(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestConv2D_All_2(t *testing.T) {
+	layer := conv.NewConv2D([2]int{2, 3}, 2, [2]int{3, 3}, 3, [2]int{2, 1}, [4]int{1, 2, 0, 1})
+	filter := []float64{
+		1, 2, -1,
+		3, 0, 1,
+
+		2, 1, 0,
+		0, 1, 2,
+
+		-2, 0, -1,
+		-2, 0, -1,
+
+		2, 1, 0,
+		2, 1, 0,
+
+		-2, 1, 0,
+		-2, 1, 0,
+
+		1, 3, 1,
+		-2, -2, -2,
+	}
+	layer.LoadFilter(&filter)
+	layer.LoadBias([]float64{
+		1, -2,
+	})
+	input := layer.ArrayToConv2DInput([]float64{
+		2, 1, -1,
+		-2, 3, 1,
+		3, 1, 2,
+
+		-3, 2, 3,
+		2, -2, 1,
+		-2, 1, 2,
+
+		4, 1, 2,
+		-2, 1, 0,
+		2, 1, 3,
+	})
+	layer.Forward(&input)
+	target := []float64{
+		2, 4, 5, -6,
+		-5, 19, 4, 4,
+
+		-13, -3, -8, -14,
+		-12, -8, 7, -8,
+	}
+	if !reflect.DeepEqual(target, *layer.FlatOutput()) {
+		fmt.Println(target)
+		functools.PrintMatArray(layer.DeflatOutput(), 0)
+		t.Fatal()
+	}
+}

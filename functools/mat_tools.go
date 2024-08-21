@@ -78,3 +78,11 @@ func IsEqual(A, B *[]float64, eps float64) bool {
 	}
 	return true
 }
+
+func RepeatSlice[T any](v T, n int) []T {
+	result := make([]T, n)
+	for i := range n {
+		result[i] = v
+	}
+	return result
+}
