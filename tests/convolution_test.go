@@ -157,9 +157,14 @@ func TestConv2D_Stride_2(t *testing.T) {
 }
 
 func TestPreparePaddingInput_1(t *testing.T) {
-	layer := conv.NewConv2D([2]int{2, 2}, 1, [2]int{2, 2}, 1, [2]int{1, 1}, [4]int{1, 1, 0, 0})
-	input := []float64{1, 2, 3, 4}
-	prepared := layer.PreparedFlatInput(mat.NewDense(2, 2, input))
+	prepared := conv.PreparedFlatInput(
+		mat.NewDense(2, 2, []float64{
+			1, 2,
+			3, 4,
+		}),
+		*conv.NewMatSize(2, 2),
+		conv.NewPadding(1, 1, 0, 0),
+	)
 	target := []float64{
 		0, 0, 0,
 		1, 2, 0,
@@ -173,9 +178,14 @@ func TestPreparePaddingInput_1(t *testing.T) {
 }
 
 func TestPreparePaddingInput_2(t *testing.T) {
-	layer := conv.NewConv2D([2]int{2, 2}, 1, [2]int{2, 2}, 1, [2]int{1, 1}, [4]int{1, 1, 1, 1})
-	input := []float64{1, 2, 3, 4}
-	prepared := layer.PreparedFlatInput(mat.NewDense(2, 2, input))
+	prepared := conv.PreparedFlatInput(
+		mat.NewDense(2, 2, []float64{
+			1, 2,
+			3, 4,
+		}),
+		*conv.NewMatSize(2, 2),
+		conv.NewPadding(1, 1, 1, 1),
+	)
 	target := []float64{
 		0, 0, 0, 0,
 		0, 1, 2, 0,
@@ -190,9 +200,15 @@ func TestPreparePaddingInput_2(t *testing.T) {
 }
 
 func TestPreparePaddingInput_3(t *testing.T) {
-	layer := conv.NewConv2D([2]int{2, 2}, 1, [2]int{3, 3}, 1, [2]int{1, 1}, [4]int{2, 2, 0, 1})
-	input := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	prepared := layer.PreparedFlatInput(mat.NewDense(3, 3, input))
+	prepared := conv.PreparedFlatInput(
+		mat.NewDense(3, 3, []float64{
+			1, 2, 3,
+			4, 5, 6,
+			7, 8, 9,
+		}),
+		*conv.NewMatSize(3, 3),
+		conv.NewPadding(2, 2, 0, 1),
+	)
 	target := []float64{
 		0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0,
@@ -332,9 +348,10 @@ func TestConv2D_All_2(t *testing.T) {
 		-2, -2, -2,
 	}
 	layer.LoadFilter(&filter)
-	layer.LoadBias([]float64{
+	bias := []float64{
 		1, -2,
-	})
+	}
+	layer.LoadBias(&bias)
 	input := layer.ArrayToConv2DInput([]float64{
 		2, 1, -1,
 		-2, 3, 1,

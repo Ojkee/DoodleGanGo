@@ -7,10 +7,6 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-type SavedParamGrads struct {
-	weightGrads mat.Dense
-}
-
 type DenseLayer struct {
 	nInputs  int
 	nNeurons int
@@ -19,7 +15,7 @@ type DenseLayer struct {
 
 	SavedDataVec
 	SavedGradsVec
-	SavedParamGrads
+	weightGrads mat.Dense
 }
 
 func NewDenseLayer(nInputs, nNeurons int) *DenseLayer {

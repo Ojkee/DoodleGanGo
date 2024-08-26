@@ -22,6 +22,13 @@ type MatSize struct {
 	width  int
 }
 
+func NewMatSize(height, width int) *MatSize {
+	return &MatSize{
+		height: height,
+		width:  width,
+	}
+}
+
 type Stride struct {
 	horizontal int
 	vertical   int
@@ -32,6 +39,20 @@ type Padding struct {
 	right int
 	down  int
 	left  int
+}
+
+func NewPadding(up, right, down, left int) Padding {
+	return Padding{
+		up:    up,
+		right: right,
+		down:  down,
+		left:  left,
+	}
+}
+
+type SavedGrads struct {
+	lastInGrads  []mat.Dense
+	lastOutGrads []mat.Dense
 }
 
 func GetFlatOutput(layer *ConvType) *[]float64 {
@@ -45,17 +66,21 @@ func GetFlatOutput(layer *ConvType) *[]float64 {
 	return &result
 }
 
-func GetDeflatOutput(layer *ConvType) *[]mat.Dense {
-	result := make([]mat.Dense, 0)
-	for i := range layer.lastOutput {
+func Deflat(source []mat.Dense, size MatSize, numFilter int) *[]mat.Dense {
+	result := make([]mat.Dense, numFilter)
+	for i := range numFilter {
 		reshaped := mat.NewDense(
-			layer.outputSize.height,
-			layer.outputSize.width,
-			layer.lastOutput[i].RawMatrix().Data,
+			size.height,
+			size.width,
+			source[i].RawMatrix().Data,
 		)
-		result = append(result, *reshaped)
+		result[i] = *reshaped
 	}
 	return &result
+}
+
+func GetDeflatOutput(layer *ConvType) *[]mat.Dense {
+	return Deflat(layer.lastOutput, layer.outputSize, len(layer.lastOutput))
 }
 
 func (size *MatSize) FlatDim() int {
