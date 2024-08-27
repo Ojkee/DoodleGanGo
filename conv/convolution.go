@@ -301,7 +301,6 @@ func (layer *Conv2D) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 
 	layer.filterGrads = make([]mat.Dense, layer.NumChannels())
 	layer.biasGrads = make([]float64, layer.numberOfFilters)
-	layer.lastOutGrads = make([]mat.Dense, layer.inputChannels)
 	for f := range layer.numberOfFilters {
 		gradKernel := PrepareFilterToConv(
 			&(*inGrads)[f],
@@ -313,19 +312,23 @@ func (layer *Conv2D) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 		)
 		for i := range layer.inputChannels {
 			flatInput := PreparedFlatInput(
-				&layer.lastInput[f*layer.numberOfFilters+i],
+				&layer.lastInput[i],
 				layer.inputSize,
 				layer.padding,
 			)
 			cGrads := Convolve(flatInput, &gradKernel)
-			layer.filterGrads[f*layer.numberOfFilters+i] = *mat.NewDense(
+			layer.filterGrads[f*layer.inputChannels+i] = *mat.NewDense(
 				layer.kernelSize.height,
 				layer.kernelSize.width,
 				cGrads.RawVector().Data,
 			)
-
 		}
 		layer.biasGrads[f] = mat.Sum(&(*inGrads)[f])
+	}
+
+	layer.lastOutGrads = make([]mat.Dense, layer.inputChannels)
+	for i := range layer.inputChannels {
+		layer.lastOutGrads[i] = *mat.NewDense(layer.inputSize.FlatDim(), 1, nil)
 	}
 
 	for f := range layer.numberOfFilters {
@@ -336,7 +339,7 @@ func (layer *Conv2D) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 			left:  layer.kernelSize.width - 1,
 		})
 		for i := range layer.inputChannels {
-			rotatedKernel := RotateMatHalfPi(layer.filters[f*layer.numberOfFilters+i])
+			rotatedKernel := RotateMatHalfPi(layer.filters[f*layer.inputChannels+i])
 			pHeight, pWidth := (*inGrads)[f].Dims()
 			pHeight += 2 * (layer.kernelSize.height - 1)
 			pWidth += 2 * (layer.kernelSize.width - 1)
@@ -349,11 +352,7 @@ func (layer *Conv2D) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 				layer.stride,
 			)
 			outGradsConvolved := Convolve(paddedGrads, &inputGradKernel)
-			layer.lastOutGrads[f*layer.numberOfFilters+i] = *mat.NewDense(
-				layer.inputSize.height,
-				layer.inputSize.width,
-				outGradsConvolved.RawVector().Data,
-			)
+			layer.lastOutGrads[i].Add(&layer.lastOutGrads[i], &outGradsConvolved)
 		}
 	}
 	return &layer.lastOutGrads
@@ -361,6 +360,10 @@ func (layer *Conv2D) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 
 func (layer *Conv2D) BackwardFromFlat(inGrads *[]float64) *[]mat.Dense {
 	return nil
+}
+
+func (layer *Conv2D) DeflatOutGrads() *[]mat.Dense {
+	return Deflat(layer.lastOutGrads, layer.inputSize, layer.inputChannels)
 }
 
 func (layer *Conv2D) GetFilterGrads() *[]mat.Dense {
