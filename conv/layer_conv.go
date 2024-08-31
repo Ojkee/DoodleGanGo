@@ -29,6 +29,10 @@ func NewMatSize(height, width int) *MatSize {
 	}
 }
 
+func AddMatSizes(a *MatSize, b *MatSize) *MatSize {
+	return NewMatSize(a.height+b.height, a.width+b.width)
+}
+
 type Stride struct {
 	horizontal int
 	vertical   int
