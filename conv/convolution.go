@@ -312,11 +312,13 @@ func (layer *Conv2D) CalcKernelBiasGrads(inGrads *[]mat.Dense) {
 		layer.inputSize.width,
 		layer.kernelSize.width,
 		layer.stride.horizontal,
+		layer.padding.left+layer.padding.right,
 	)
 	skippedRows := SkippedRowsColsPad(
 		layer.inputSize.height,
 		layer.kernelSize.height,
 		layer.stride.vertical,
+		layer.padding.up+layer.padding.down,
 	)
 	preparedGradSize := AddMatSizes(
 		DilatedSize(&(*inGrads)[0], &layer.stride),
@@ -348,6 +350,7 @@ func (layer *Conv2D) CalcKernelBiasGrads(inGrads *[]mat.Dense) {
 				layer.inputSize,
 				layer.padding,
 			)
+
 			convolvedKernelGrad := Convolve(flatInput, &kernelGrad)
 			layer.filterGrads[f*layer.inputChannels+i] = *mat.NewDense(
 				layer.kernelSize.height,
@@ -385,14 +388,22 @@ func Dilate(input *mat.Dense, stride *Stride) *mat.Dense {
 	return mat.NewDense(dilatedSize.height, dilatedSize.width, result)
 }
 
-func CropMat(source mat.Dense, desiredSize *MatSize) mat.Dense {
-	retVal := mat.NewDense(desiredSize.height, desiredSize.width, nil)
-	retVal.Add(retVal, source.Slice(0, desiredSize.height, 0, desiredSize.width))
+func CropMat(source mat.Dense, cropPadding Padding) mat.Dense {
+	n, m := source.Dims()
+	retHeight := n - cropPadding.up - cropPadding.down
+	retWidth := m - cropPadding.left - cropPadding.right
+	retVal := mat.NewDense(retHeight, retWidth, nil)
+	retVal.Add(retVal, source.Slice(
+		cropPadding.up,
+		cropPadding.up+retHeight,
+		cropPadding.left,
+		cropPadding.left+retWidth,
+	))
 	return *retVal
 }
 
-func SkippedRowsColsPad(inputSize, kernelSize, stride int) int {
-	retVal := inputSize
+func SkippedRowsColsPad(inputSize, kernelSize, stride, sumPad int) int {
+	retVal := inputSize + sumPad
 	for retVal > kernelSize {
 		retVal -= stride
 	}
@@ -404,25 +415,26 @@ func SkippedRowsColsPad(inputSize, kernelSize, stride int) int {
 
 func (layer *Conv2D) CalcOutGrads(inGrads *[]mat.Dense) {
 	layer.lastOutGrads = make([]mat.Dense, layer.inputChannels)
-	paddedSize := GetPaddedInputSize(layer.inputSize, layer.padding)
-	flatPaddedSize := paddedSize.FlatDim()
 	for i := range layer.inputChannels {
-		layer.lastOutGrads[i] = *mat.NewDense(flatPaddedSize, 1, nil)
+		layer.lastOutGrads[i] = *mat.NewDense(layer.inputSize.height, layer.inputSize.width, nil)
 	}
 
 	skippedRows := SkippedRowsColsPad(
 		layer.inputSize.height,
 		layer.kernelSize.height,
 		layer.stride.vertical,
+		layer.padding.up+layer.padding.down,
 	)
 	skippedCols := SkippedRowsColsPad(
 		layer.inputSize.width,
 		layer.kernelSize.width,
 		layer.stride.horizontal,
+		layer.padding.left+layer.padding.right,
 	)
 	dilatedSize := *DilatedSize(&(*inGrads)[0], &layer.stride)
 	pHeight := dilatedSize.height + 2*(layer.kernelSize.height-1) + skippedRows
 	pWidth := dilatedSize.width + 2*(layer.kernelSize.width-1) + skippedCols
+	paddedInputSize := GetPaddedInputSize(layer.inputSize, layer.padding)
 
 	for f := range layer.numberOfFilters {
 		dilated := Dilate(&(*inGrads)[f], &layer.stride)
@@ -442,12 +454,16 @@ func (layer *Conv2D) CalcOutGrads(inGrads *[]mat.Dense) {
 				&rotatedKernel,
 				paddedGradsFlat.Len(),
 				MatSize{height: pHeight, width: pWidth},
-				layer.inputSize,
+				paddedInputSize,
 				layer.kernelSize,
 				Stride{horizontal: 1, vertical: 1},
 			)
 			outGradsConvolved := Convolve(paddedGradsFlat, &rotatedKernelPrep)
-			layer.lastOutGrads[i].Add(&layer.lastOutGrads[i], &outGradsConvolved)
+			cropped := CropMat(
+				*mat.NewDense(paddedInputSize.height, paddedInputSize.width, outGradsConvolved.RawVector().Data),
+				layer.padding,
+			)
+			layer.lastOutGrads[i].Add(&layer.lastOutGrads[i], &cropped)
 		}
 	}
 }
@@ -495,4 +511,7 @@ func (layer *Conv2D) ApplyGrads(learningRate float64) {
 	for b := range layer.numberOfFilters {
 		layer.bias[b] -= learningRate * layer.biasGrads[b]
 	}
+}
+
+func (layer *Conv2D) ApplyBatchGrads(learningRate float64, batchGrads *mat.Dense, bias *[]float64) {
 }

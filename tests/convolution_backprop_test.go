@@ -374,6 +374,53 @@ func TestConv2D_Backward_7(t *testing.T) {
 }
 
 func TestConv2D_Backward_8(t *testing.T) {
+	layer := conv.NewConv2D([2]int{2, 2}, 1, [2]int{2, 2}, 1, [2]int{1, 1}, [4]int{1, 1, 0, 0})
+	filter := []float64{
+		-2, 2, 2, -2,
+	}
+	layer.LoadFilter(&filter)
+	input := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{-1, 1, 0.5, 2}),
+	}
+	layer.Forward(&input)
+	inGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{2, 0.5, -1, -0.5}),
+	}
+	layer.Backward(&inGrads)
+
+	outGrads := layer.DeflatOutGrads()
+	filterGrads := layer.GetFilterGrads()
+	biasGrads := layer.GetBiasGrads()
+
+	targetOutGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{6, -4, -2, 1}),
+	}
+	targetFilterGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{0.5, -1, -3, 0}),
+	}
+	targetBiasGrads := []float64{1}
+
+	if !reflect.DeepEqual(*filterGrads, targetFilterGrads) {
+		fmt.Println("== FILTER GRADS ==")
+		fmt.Println(*filterGrads)
+		fmt.Println(targetFilterGrads)
+		t.Fail()
+	}
+	if !reflect.DeepEqual(*outGrads, targetOutGrads) {
+		fmt.Println("== OUT GRADS ==")
+		fmt.Println(*outGrads)
+		fmt.Println(targetOutGrads)
+		t.Fail()
+	}
+	if !reflect.DeepEqual(*biasGrads, targetBiasGrads) {
+		fmt.Println("== BIAS GRADS ==")
+		fmt.Println(*biasGrads)
+		fmt.Println(targetBiasGrads)
+		t.Fail()
+	}
+}
+
+func TestConv2D_Backward_9(t *testing.T) {
 	layer := conv.NewConv2D([2]int{2, 2}, 1, [2]int{3, 3}, 1, [2]int{2, 2}, [4]int{1, 1, 0, 0})
 	filter := []float64{
 		2, -1, 2, -1,
@@ -396,7 +443,7 @@ func TestConv2D_Backward_8(t *testing.T) {
 		*mat.NewDense(3, 3, []float64{4, -2, -2, 2, -1, 1, 2, -1, 1}),
 	}
 	targetFilterGrads := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{2.5, -1, 2.5, 11}),
+		*mat.NewDense(2, 2, []float64{5, 2, 4.5, 3}),
 	}
 	targetBiasGrads := []float64{2.5}
 
