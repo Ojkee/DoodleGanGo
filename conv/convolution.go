@@ -460,7 +460,11 @@ func (layer *Conv2D) CalcOutGrads(inGrads *[]mat.Dense) {
 			)
 			outGradsConvolved := Convolve(paddedGradsFlat, &rotatedKernelPrep)
 			cropped := CropMat(
-				*mat.NewDense(paddedInputSize.height, paddedInputSize.width, outGradsConvolved.RawVector().Data),
+				*mat.NewDense(
+					paddedInputSize.height,
+					paddedInputSize.width,
+					outGradsConvolved.RawVector().Data,
+				),
 				layer.padding,
 			)
 			layer.lastOutGrads[i].Add(&layer.lastOutGrads[i], &cropped)
