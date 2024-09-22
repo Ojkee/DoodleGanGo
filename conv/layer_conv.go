@@ -4,6 +4,13 @@ import "gonum.org/v1/gonum/mat"
 
 type ConvLayer interface {
 	Forward(*[]mat.Dense) *[]mat.Dense
+	Backward(inGrads *[]mat.Dense) *[]mat.Dense
+	ApplyGrads(learningRate *float64)
+	ApplyBatchGrads(
+		learningRate *float64,
+		batchFilterGrads *mat.Dense,
+		batchBiasGrads *[]float64,
+	)
 }
 
 type ConvType struct {
@@ -89,4 +96,12 @@ func GetDeflatOutput(layer *ConvType) *[]mat.Dense {
 
 func (size *MatSize) FlatDim() int {
 	return size.height * size.width
+}
+
+func (size *MatSize) Height() int {
+	return size.height
+}
+
+func (size *MatSize) Width() int {
+	return size.width
 }

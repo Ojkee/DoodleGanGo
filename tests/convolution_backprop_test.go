@@ -575,3 +575,54 @@ func TestConv2D_Backward_11(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestConv2D_ApplyGrads_1(t *testing.T) {
+	layer := conv.NewConv2D([2]int{2, 2}, 3, [2]int{3, 3}, 2, [2]int{2, 2}, [4]int{1, 1, 0, 0})
+	filter := []float64{
+		1, -1, -1, 1,
+		0, 0, 1, 1,
+		-1, 2, -1, -1,
+		2, 2, -1, -1,
+		0, 1, 1, 2,
+		2, -1, -1, 0,
+	}
+	layer.LoadFilter(&filter)
+	input := []mat.Dense{
+		*mat.NewDense(3, 3, []float64{1, -1, 2, 2, -2, 0, -1, 3, -1}),
+		*mat.NewDense(3, 3, []float64{2, 3, 0, 1, 1, 2, -3, -1, 1}),
+	}
+	layer.Forward(&input)
+	inGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{0.5, 0.75, 1, 0}),
+		*mat.NewDense(2, 2, []float64{2, 1, 0, 2}),
+		*mat.NewDense(2, 2, []float64{-3, 2, 1, 1}),
+	}
+	layer.Backward(&inGrads)
+
+	learningRate := 0.1
+	layer.ApplyGrads(&learningRate)
+	layerFilter := layer.GetFilter()
+	layerBias := layer.GetBias()
+	targetLayerFilter := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{0.8, -0.8, -1.1, 0.75}),
+		*mat.NewDense(2, 2, []float64{-0.1, -0.1, 1.2, 0.95}),
+		*mat.NewDense(2, 2, []float64{-1, 2, -1.2, -0.8}),
+		*mat.NewDense(2, 2, []float64{1.6, 2, -1.6, -1.6}),
+		*mat.NewDense(2, 2, []float64{-0.2, 1.2, 1.1, 1.4}),
+		*mat.NewDense(2, 2, []float64{1.7, -1.1, -0.2, 1}),
+	}
+	targetLayerBias := []float64{-0.225, -0.5, -0.1}
+
+	if !functools.IsEqualMat(&targetLayerFilter, layerFilter, 0.001) {
+		fmt.Println("== FILTER ==")
+		fmt.Println(targetLayerFilter)
+		fmt.Println(layerFilter)
+		t.Fatal()
+	}
+	if !functools.IsEqual(&targetLayerBias, layerBias, 0.001) {
+		fmt.Println("== BIAS ==")
+		fmt.Println(targetLayerFilter)
+		fmt.Println(layerFilter)
+		t.Fatal()
+	}
+}

@@ -10,6 +10,16 @@ import (
 	"DoodleGan/functools"
 )
 
+/*
+
+   Sources for backpropagation:
+
+   https://deeplearning.cs.cmu.edu/F21/document/recitation/Recitation5/CNN_Backprop_Recitation_5_F21.pdf
+   https://hideyukiinada.github.io/cnn_backprop_strides2.html
+   https://youtu.be/Pn7RK7tofPg?si=ICatCW-zOZKZk7au
+
+*/
+
 type Conv2D struct {
 	ConvType
 	kernelSize      MatSize
@@ -123,6 +133,14 @@ func NewConv2D(
 			skippedCols:           skippedCols_,
 		},
 	}
+}
+
+func (layer *Conv2D) GetKernelSize() (int, int) {
+	return layer.kernelSize.height, layer.kernelSize.width
+}
+
+func (layer *Conv2D) GetOutputSize() (int, int) {
+	return layer.outputSize.height, layer.outputSize.width
 }
 
 func (layer *Conv2D) PrintFilter(precision int) {
@@ -246,7 +264,21 @@ func (layer *Conv2D) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 }
 
 func (layer *Conv2D) BackwardFromFlat(inGrads *[]float64) *[]mat.Dense {
-	return nil
+	inGradsMat := make([]mat.Dense, layer.numberOfFilters)
+	pixelsInKernel := layer.kernelSize.FlatDim()
+	for i := range layer.numberOfFilters {
+		inGradsMat[i] = *mat.NewDense(
+			layer.gradSize.height,
+			layer.gradSize.width,
+			(*inGrads)[i*pixelsInKernel:(i+1)*pixelsInKernel],
+		)
+	}
+	return layer.Backward(&inGradsMat)
+}
+
+func (layer *Conv2D) BackwardFromVec(inGrads *mat.VecDense) *[]mat.Dense {
+	inGradsData := inGrads.RawVector().Data
+	return layer.BackwardFromFlat(&inGradsData)
 }
 
 func (layer *Conv2D) DeflatOutGrads() *[]mat.Dense {
@@ -262,24 +294,12 @@ func (layer *Conv2D) GetBiasGrads() *[]float64 {
 }
 
 func (layer *Conv2D) ApplyGrads(learningRate *float64) {
-	for f := range layer.numChannels() {
-		var scaledGrads mat.Dense
-		scaledGrads.Scale(*learningRate, &layer.filterGrads[f])
-		gradsKernelMatSize := prepareFilterToConv(
-			&scaledGrads,
-			layer.inputSize.FlatDim(),
-			layer.paddedInputSize,
-			layer.outputSize,
-			layer.kernelSize,
-			layer.stride,
-		)
-		layer.filters[f].Sub(
-			&layer.filters[f],
-			&gradsKernelMatSize,
-		)
-	}
 	for b := range layer.numberOfFilters {
 		layer.bias[b] -= *learningRate * layer.biasGrads[b]
+	}
+	for f := range layer.numChannels() {
+		layer.filterGrads[f].Scale(*learningRate, &layer.filterGrads[f])
+		layer.filters[f].Sub(&layer.filters[f], &layer.filterGrads[f])
 	}
 }
 
@@ -288,6 +308,14 @@ func (layer *Conv2D) ApplyBatchGrads(
 	batchFilterGrads *mat.Dense,
 	batchBiasGrads *[]float64,
 ) {
+}
+
+func (layer *Conv2D) GetFilter() *[]mat.Dense {
+	return &layer.filters
+}
+
+func (layer *Conv2D) GetBias() *[]float64 {
+	return &layer.bias
 }
 
 func (layer *Conv2D) numChannels() int {
