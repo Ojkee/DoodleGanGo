@@ -49,18 +49,17 @@ type VTanh struct {
 
 func ApplyOnInputVec(
 	act func(v float64) float64,
-	input mat.VecDense,
-	dest *mat.VecDense,
+	input, dest *mat.VecDense,
 ) {
 	for i := range input.Len() {
 		dest.RawVector().Data[i] = act(input.AtVec(i))
 	}
-	dest = &input
+	// dest = &input
 }
 
 func BackwardApply(
 	actPrime func(v float64) float64,
-	lastInput, inGrads mat.VecDense,
+	lastInput, inGrads *mat.VecDense,
 ) mat.VecDense {
 	result := mat.NewVecDense(inGrads.Len(), nil)
 	ApplyOnInputVec(actPrime, lastInput, result)
@@ -72,15 +71,15 @@ func NewSoftmax() Softmax {
 	return Softmax{}
 }
 
-func (layer *Softmax) Forward(input mat.VecDense) mat.VecDense {
+func (layer *Softmax) Forward(input *mat.VecDense) *mat.VecDense {
 	expSums := 0.0
 	for i := range input.Len() {
 		exp := math.Exp(input.AtVec(i))
 		expSums += exp
 		input.RawVector().Data[i] = exp
 	}
-	layer.lastOutput.ScaleVec(1./expSums, &input)
-	return layer.lastOutput
+	layer.lastOutput.ScaleVec(1./expSums, input)
+	return &layer.lastOutput
 }
 
 func NewVReLU() VReLU {
@@ -101,15 +100,16 @@ func NewVReLU() VReLU {
 	}
 }
 
-func (layer *VReLU) Forward(input mat.VecDense) mat.VecDense {
-	layer.lastInput = input
+func (layer *VReLU) Forward(input *mat.VecDense) *mat.VecDense {
+	layer.lastInput = *input
 	layer.lastOutput = *mat.NewVecDense(input.Len(), nil)
 	ApplyOnInputVec(layer.Vlambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *VReLU) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
+func (layer *VReLU) Backward(inGrads *mat.VecDense) *mat.VecDense {
+	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
+	return &retVal
 }
 
 func NewVLeakyReLU(alpha float64) VLeakyReLU {
@@ -132,15 +132,16 @@ func NewVLeakyReLU(alpha float64) VLeakyReLU {
 	}
 }
 
-func (layer *VLeakyReLU) Forward(input mat.VecDense) mat.VecDense {
-	layer.lastInput = input
+func (layer *VLeakyReLU) Forward(input *mat.VecDense) *mat.VecDense {
+	layer.lastInput = *input
 	layer.lastOutput = *mat.NewVecDense(input.Len(), nil)
 	ApplyOnInputVec(layer.Vlambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *VLeakyReLU) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
+func (layer *VLeakyReLU) Backward(inGrads *mat.VecDense) *mat.VecDense {
+	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
+	return &retVal
 }
 
 func NewVELU(alpha ...float64) VELU {
@@ -169,15 +170,16 @@ func NewVELU(alpha ...float64) VELU {
 	}
 }
 
-func (layer *VELU) Forward(input mat.VecDense) mat.VecDense {
-	layer.lastInput = input
+func (layer *VELU) Forward(input *mat.VecDense) *mat.VecDense {
+	layer.lastInput = *input
 	layer.lastOutput = *mat.NewVecDense(input.Len(), nil)
 	ApplyOnInputVec(layer.Vlambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *VELU) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
+func (layer *VELU) Backward(inGrads *mat.VecDense) *mat.VecDense {
+	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
+	return &retVal
 }
 
 func NewVSigmoid() VSigmoid {
@@ -195,15 +197,16 @@ func NewVSigmoid() VSigmoid {
 	}
 }
 
-func (layer *VSigmoid) Forward(input mat.VecDense) mat.VecDense {
-	layer.lastInput = input
+func (layer *VSigmoid) Forward(input *mat.VecDense) *mat.VecDense {
+	layer.lastInput = *input
 	layer.lastOutput = *mat.NewVecDense(input.Len(), nil)
 	ApplyOnInputVec(layer.Vlambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *VSigmoid) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
+func (layer *VSigmoid) Backward(inGrads *mat.VecDense) *mat.VecDense {
+	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
+	return &retVal
 }
 
 func NewVTanh() VTanh {
@@ -221,13 +224,14 @@ func NewVTanh() VTanh {
 	}
 }
 
-func (layer *VTanh) Forward(input mat.VecDense) mat.VecDense {
-	layer.lastInput = input
+func (layer *VTanh) Forward(input *mat.VecDense) *mat.VecDense {
+	layer.lastInput = *input
 	layer.lastOutput = *mat.NewVecDense(input.Len(), nil)
 	ApplyOnInputVec(layer.Vlambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *VTanh) Backward(inGrads mat.VecDense) mat.VecDense {
-	return BackwardApply(layer.VlambdaPrime, layer.lastInput, inGrads)
+func (layer *VTanh) Backward(inGrads *mat.VecDense) *mat.VecDense {
+	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
+	return &retVal
 }

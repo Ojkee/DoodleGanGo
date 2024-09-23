@@ -45,20 +45,20 @@ type Tanh struct {
 
 func ApplyOnInputMatDense(
 	act func(i, j int, v float64) float64,
-	source []mat.Dense,
-	dest *[]mat.Dense,
+	source, dest *[]mat.Dense,
 ) {
-	for i := range len(source) {
+	for i := range len(*source) {
 		(*dest)[i].Apply(
 			act,
-			&source[i],
+			&(*source)[i],
 		)
 	}
 }
 
 func BackwardApply(
 	actPrime func(i, j int, v float64) float64,
-	lastInput, inGrads []mat.Dense,
+	lastInput []mat.Dense,
+	inGrads *[]mat.Dense,
 ) []mat.Dense {
 	result := make([]mat.Dense, len(lastInput))
 	for i := range len(lastInput) {
@@ -66,7 +66,7 @@ func BackwardApply(
 			actPrime,
 			&lastInput[i],
 		)
-		result[i].MulElem(&result[i], &inGrads[i])
+		result[i].MulElem(&result[i], &(*inGrads)[i])
 	}
 	return result
 }
@@ -89,15 +89,32 @@ func NewReLU() ReLU {
 	}
 }
 
-func (layer *ReLU) Forward(input []mat.Dense) []mat.Dense {
-	layer.lastInput = input
-	layer.lastOutput = make([]mat.Dense, len(input))
+func (layer *ReLU) Forward(input *[]mat.Dense) *[]mat.Dense {
+	layer.lastInput = *input
+	layer.lastOutput = make([]mat.Dense, len(*input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *ReLU) Backward(inGrads []mat.Dense) []mat.Dense {
-	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+func (layer *ReLU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
+	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &retVal
+}
+
+func (layer *ReLU) DeflatOutGrads() *[]mat.Dense {
+	return nil
+}
+
+func (layer *ReLU) GetBiasGrads() *[]float64 {
+	return nil
+}
+
+func (layer *ReLU) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
+	return
 }
 
 func NewLeakyReLU(alpha float64) LeakyReLU {
@@ -120,15 +137,32 @@ func NewLeakyReLU(alpha float64) LeakyReLU {
 	}
 }
 
-func (layer *LeakyReLU) Forward(input []mat.Dense) []mat.Dense {
-	layer.lastInput = input
-	layer.lastOutput = make([]mat.Dense, len(input))
+func (layer *LeakyReLU) Forward(input *[]mat.Dense) *[]mat.Dense {
+	layer.lastInput = *input
+	layer.lastOutput = make([]mat.Dense, len(*input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *LeakyReLU) Backward(inGrads []mat.Dense) []mat.Dense {
-	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+func (layer *LeakyReLU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
+	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &retVal
+}
+
+func (layer *LeakyReLU) DeflatOutGrads() *[]mat.Dense {
+	return nil
+}
+
+func (layer *LeakyReLU) GetBiasGrads() *[]float64 {
+	return nil
+}
+
+func (layer *LeakyReLU) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
+	return
 }
 
 func NewELU(alpha ...float64) ELU {
@@ -157,15 +191,32 @@ func NewELU(alpha ...float64) ELU {
 	}
 }
 
-func (layer *ELU) Forward(input []mat.Dense) []mat.Dense {
-	layer.lastInput = input
-	layer.lastOutput = make([]mat.Dense, len(input))
+func (layer *ELU) Forward(input *[]mat.Dense) *[]mat.Dense {
+	layer.lastInput = *input
+	layer.lastOutput = make([]mat.Dense, len(*input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *ELU) Backward(inGrads []mat.Dense) []mat.Dense {
-	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+func (layer *ELU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
+	reVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &reVal
+}
+
+func (layer *ELU) DeflatOutGrads() *[]mat.Dense {
+	return nil
+}
+
+func (layer *ELU) GetBiasGrads() *[]float64 {
+	return nil
+}
+
+func (layer *ELU) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
+	return
 }
 
 func NewSigmoid() Sigmoid {
@@ -183,15 +234,32 @@ func NewSigmoid() Sigmoid {
 	}
 }
 
-func (layer *Sigmoid) Forward(input []mat.Dense) []mat.Dense {
-	layer.lastInput = input
-	layer.lastOutput = make([]mat.Dense, len(input))
+func (layer *Sigmoid) Forward(input *[]mat.Dense) *[]mat.Dense {
+	layer.lastInput = *input
+	layer.lastOutput = make([]mat.Dense, len(*input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *Sigmoid) Backward(inGrads []mat.Dense) []mat.Dense {
-	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+func (layer *Sigmoid) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
+	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &retVal
+}
+
+func (layer *Sigmoid) DeflatOutGrads() *[]mat.Dense {
+	return nil
+}
+
+func (layer *Sigmoid) GetBiasGrads() *[]float64 {
+	return nil
+}
+
+func (layer *Sigmoid) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
+	return
 }
 
 func NewTanh() Tanh {
@@ -209,13 +277,30 @@ func NewTanh() Tanh {
 	}
 }
 
-func (layer *Tanh) Forward(input []mat.Dense) []mat.Dense {
-	layer.lastInput = input
-	layer.lastOutput = make([]mat.Dense, len(input))
+func (layer *Tanh) Forward(input *[]mat.Dense) *[]mat.Dense {
+	layer.lastInput = *input
+	layer.lastOutput = make([]mat.Dense, len(*input))
 	ApplyOnInputMatDense(layer.lambda, input, &layer.lastOutput)
-	return layer.lastOutput
+	return &layer.lastOutput
 }
 
-func (layer *Tanh) Backward(inGrads []mat.Dense) []mat.Dense {
-	return BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+func (layer *Tanh) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
+	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &retVal
+}
+
+func (layer *Tanh) DeflatOutGrads() *[]mat.Dense {
+	return nil
+}
+
+func (layer *Tanh) GetBiasGrads() *[]float64 {
+	return nil
+}
+
+func (layer *Tanh) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
+	return
 }

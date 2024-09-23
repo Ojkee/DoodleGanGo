@@ -5,12 +5,10 @@ import "gonum.org/v1/gonum/mat"
 type ConvLayer interface {
 	Forward(*[]mat.Dense) *[]mat.Dense
 	Backward(inGrads *[]mat.Dense) *[]mat.Dense
-	ApplyGrads(learningRate *float64)
-	ApplyBatchGrads(
-		learningRate *float64,
-		batchFilterGrads *mat.Dense,
-		batchBiasGrads *[]float64,
-	)
+
+	ApplyGrads(learningRate *float64, dWeightsGrads *[]mat.Dense, dBiasGrad *[]float64)
+	DeflatOutGrads() *[]mat.Dense
+	GetBiasGrads() *[]float64
 }
 
 type ConvType struct {

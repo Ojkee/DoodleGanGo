@@ -18,7 +18,7 @@ type DenseLayer struct {
 	weightGrads mat.Dense
 }
 
-func NewDenseLayer(nInputs, nNeurons int) *DenseLayer {
+func NewDenseLayer(nInputs, nNeurons int) DenseLayer {
 	if nInputs < 0 || nNeurons < 0 {
 		mess := fmt.Sprintf(
 			"Number of inputs ans number of neurons must be positive,\n\thave: %d, %d",
@@ -28,7 +28,7 @@ func NewDenseLayer(nInputs, nNeurons int) *DenseLayer {
 		panic(mess)
 	}
 	bias := *mat.NewVecDense(nNeurons, nil)
-	return &DenseLayer{
+	return DenseLayer{
 		nInputs:  nInputs,
 		nNeurons: nNeurons,
 		bias:     bias,
@@ -80,20 +80,20 @@ func (layer *DenseLayer) LoadBias(bias *[]float64) {
 	layer.bias = *mat.NewVecDense(layer.nNeurons, *bias)
 }
 
-func (layer *DenseLayer) Forward(input mat.VecDense) *mat.VecDense {
-	layer.lastInput = input
-	layer.lastOutput.MulVec(&layer.weights, &input)
+func (layer *DenseLayer) Forward(input *mat.VecDense) *mat.VecDense {
+	layer.lastInput = *input
+	layer.lastOutput.MulVec(&layer.weights, input)
 	layer.lastOutput.AddVec(&layer.lastOutput, &layer.bias)
 	return &layer.lastOutput
 }
 
-func (layer *DenseLayer) Backward(inGradients mat.VecDense) *mat.VecDense {
-	layer.lastInGrads = inGradients
-	layer.weightGrads.Mul(&inGradients, layer.lastInput.T())
+func (layer *DenseLayer) Backward(inGrads *mat.VecDense) *mat.VecDense {
+	layer.lastInGrads = *inGrads
+	layer.weightGrads.Mul(inGrads, layer.lastInput.T())
 
 	var result mat.VecDense
 	weightsT := layer.weights.T()
-	result.MulVec(weightsT, &inGradients)
+	result.MulVec(weightsT, inGrads)
 	layer.lastOutGrads = result
 	return &layer.lastOutGrads
 }

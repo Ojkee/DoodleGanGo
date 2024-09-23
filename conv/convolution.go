@@ -293,21 +293,19 @@ func (layer *Conv2D) GetBiasGrads() *[]float64 {
 	return &layer.biasGrads
 }
 
-func (layer *Conv2D) ApplyGrads(learningRate *float64) {
+func (layer *Conv2D) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
 	for b := range layer.numberOfFilters {
-		layer.bias[b] -= *learningRate * layer.biasGrads[b]
+		layer.bias[b] -= *learningRate * (*dBiasGrad)[b]
 	}
 	for f := range layer.numChannels() {
-		layer.filterGrads[f].Scale(*learningRate, &layer.filterGrads[f])
-		layer.filters[f].Sub(&layer.filters[f], &layer.filterGrads[f])
+		var scaledGrads mat.Dense
+		scaledGrads.Scale(*learningRate, &layer.filterGrads[f])
+		layer.filters[f].Sub(&layer.filters[f], &scaledGrads)
 	}
-}
-
-func (layer *Conv2D) ApplyBatchGrads(
-	learningRate *float64,
-	batchFilterGrads *mat.Dense,
-	batchBiasGrads *[]float64,
-) {
 }
 
 func (layer *Conv2D) GetFilter() *[]mat.Dense {

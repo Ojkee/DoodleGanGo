@@ -600,7 +600,7 @@ func TestConv2D_ApplyGrads_1(t *testing.T) {
 	layer.Backward(&inGrads)
 
 	learningRate := 0.1
-	layer.ApplyGrads(&learningRate)
+	layer.ApplyGrads(&learningRate, layer.DeflatOutGrads(), layer.GetBiasGrads())
 	layerFilter := layer.GetFilter()
 	layerBias := layer.GetBias()
 	targetLayerFilter := []mat.Dense{

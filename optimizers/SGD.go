@@ -7,26 +7,26 @@ import (
 	"DoodleGan/layers"
 )
 
-type SDG struct {
+type SGD struct {
 	learningRate       float64
 	lastConvOutputSize conv.MatSize
 }
 
-func NewSDG(learningRate float64, lastConvOutputSize [2]int) SDG {
+func NewSGD(learningRate float64, lastConvOutputSize [2]int) SGD {
 	if learningRate <= 0 {
-		panic("NewSDG fail:\n\tLearning Rate can't be less or equal 0")
+		panic("NewSGD fail:\n\tLearning Rate can't be less or equal 0")
 	}
-	return SDG{
+	return SGD{
 		learningRate:       learningRate,
 		lastConvOutputSize: *conv.NewMatSize(lastConvOutputSize[0], lastConvOutputSize[1]),
 	}
 }
 
-func (opt *SDG) BackwardDenseLayers(denses *[]layers.DenseLayer, loss *mat.VecDense) *mat.VecDense {
+func (opt *SGD) BackwardDenseLayers(denses *[]layers.DenseLayer, loss *mat.VecDense) *mat.VecDense {
 	return nil
 }
 
-func (opt *SDG) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *mat.VecDense) {
+func (opt *SGD) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *mat.VecDense) {
 	gradsMat := vecToMat(
 		denseGrads,
 		opt.lastConvOutputSize.Height(),
@@ -34,9 +34,8 @@ func (opt *SDG) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *mat.
 	)
 	for i := len(*convs2D) - 1; i >= 0; i-- {
 		gradsMat = *(*convs2D)[i].Backward(&gradsMat)
-	}
-	for i := range *convs2D {
-		(*convs2D)[i].ApplyGrads(&opt.learningRate)
+		biasGrads := (*convs2D)[i].GetBiasGrads()
+		(*convs2D)[i].ApplyGrads(&opt.learningRate, &gradsMat, biasGrads)
 	}
 }
 

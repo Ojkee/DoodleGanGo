@@ -4,6 +4,7 @@ import "gonum.org/v1/gonum/mat"
 
 type Layer interface {
 	Forward(input *mat.VecDense) *mat.VecDense
+	Backward(inGrads *mat.VecDense) *mat.VecDense
 }
 
 type SavedDataVec struct {

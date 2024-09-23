@@ -16,7 +16,7 @@ func TestDenseLayer_Forward_1(t *testing.T) {
 	weights := []float64{2, 3}
 	layer.LoadWeights(&weights)
 	input := *mat.NewVecDense(1, []float64{2})
-	output := layer.Forward(input)
+	output := layer.Forward(&input)
 	target := *mat.NewVecDense(2, []float64{4, 6})
 	if !functools.IsEqualVec(&target, output, 0.001) {
 		t.Fatal()
@@ -28,7 +28,7 @@ func TestDenseLayer_Forward_2(t *testing.T) {
 	weights := []float64{-1, 2, 4}
 	layer.LoadWeights(&weights)
 	input := *mat.NewVecDense(3, []float64{-4, 8.5, 4})
-	output := layer.Forward(input)
+	output := layer.Forward(&input)
 	target := *mat.NewVecDense(1, []float64{4 + 17 + 16})
 	if !functools.IsEqualVec(&target, output, 0.001) {
 		t.Fatal()
@@ -42,7 +42,7 @@ func TestDenseLayer_Forward_3(t *testing.T) {
 	bias := []float64{1}
 	layer.LoadBias(&bias)
 	input := *mat.NewVecDense(3, []float64{-4, 8.5, 4})
-	output := layer.Forward(input)
+	output := layer.Forward(&input)
 	target := *mat.NewVecDense(1, []float64{4 + 17 + 16 + 1})
 	if !functools.IsEqualVec(&target, output, 0.001) {
 		t.Fatal()
@@ -65,7 +65,7 @@ func TestDenseLayer_Forward_4(t *testing.T) {
 	input := mat.NewVecDense(3, []float64{
 		1, 2, 3,
 	})
-	output := layer.Forward(*input)
+	output := layer.Forward(input)
 	target := []float64{
 		12.5, 2.5, 1, 2,
 	}
@@ -90,11 +90,11 @@ func TestDenseLayer_Backward_1(t *testing.T) {
 	input := mat.NewVecDense(2, []float64{
 		0.5, -0.5,
 	})
-	layer.Forward(*input)
+	layer.Forward(input)
 	inGrads := []float64{
 		4,
 	}
-	outGrads := layer.Backward(*mat.NewVecDense(1, inGrads))
+	outGrads := layer.Backward(mat.NewVecDense(1, inGrads))
 	targetWeightsGrads := mat.NewDense(1, 2, []float64{
 		2, -2,
 	})
@@ -136,8 +136,8 @@ func TestDenseLayer_Backward_2(t *testing.T) {
 	input := mat.NewVecDense(3, []float64{
 		0.5, -0.5, 1,
 	})
-	layer.Forward(*input)
-	outGrads := layer.Backward(*mat.NewVecDense(2, []float64{
+	layer.Forward(input)
+	outGrads := layer.Backward(mat.NewVecDense(2, []float64{
 		4, -2,
 	}))
 	targetWeightsGrads := mat.NewDense(2, 3, []float64{
@@ -191,13 +191,13 @@ func TestDenseLayer_Backward_3(t *testing.T) {
 	input := *mat.NewVecDense(1, []float64{
 		4,
 	})
-	layer.Forward(input)
+	layer.Forward(&input)
 	bias := []float64{
 		1, 0,
 	}
 	layer.LoadBias(&bias)
 
-	outGrads := layer.Backward(*mat.NewVecDense(2, []float64{
+	outGrads := layer.Backward(mat.NewVecDense(2, []float64{
 		3, -2,
 	}))
 	targetWeightsGrads := mat.NewDense(2, 1, []float64{
