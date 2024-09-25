@@ -170,6 +170,100 @@ func TestSGD_Conv_2(t *testing.T) {
 	}
 }
 
+func TestSGD_Conv_3(t *testing.T) {
+	conv_1 := conv.NewConv2D([2]int{2, 2}, 2, [2]int{4, 4}, 2, [2]int{2, 2}, [4]int{0, 0, 0, 0})
+	filter := []float64{
+		3, 3, 0, -1, 2, 2, 1, 2,
+		1, -1, -2, 0, 2, -1, -2, 3,
+	}
+	conv_1.LoadFilter(&filter)
+	bias_1 := []float64{1, -1}
+	conv_1.LoadBias(&bias_1)
+	pool_1 := conv.NewAvgPool([2]int{2, 2}, [2]int{2, 2}, [2]int{2, 2})
+	act_1 := conv.NewLeakyReLU(0.1)
+
+	input := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			-1, 3, 0, 4, -1, 1, 3, 1, 4, 0, 4, -3, -2, -1, 2, 3,
+		}),
+		*mat.NewDense(4, 4, []float64{
+			-3, 0, -3, -3, 2, 1, 0, 0, -1, 1, 1, 3, -1, -1, -1, 3,
+		}),
+	}
+	conv_1.Forward(&input)
+	pooled := pool_1.Forward(conv_1.DeflatOutput())
+	act_1.Forward(pooled)
+
+	cnn := []conv.ConvLayer{&conv_1, &pool_1, &act_1}
+	grads := mat.NewVecDense(2, []float64{1, 2})
+	optimizer := optimizers.NewSGD(0.5, [2]int{1, 1})
+	optimizer.BackwardConv2DLayers(&cnn, grads)
+
+	result_filter := conv_1.GetFilter()
+	result_bias := conv_1.GetBias()
+	target_filter := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{2.125, 2.5, -0.25, -1.5}),
+		*mat.NewDense(2, 2, []float64{2.75, 1.875, 1, 1.625}),
+		*mat.NewDense(2, 2, []float64{0.825, -1.1, -2.05, -0.1}),
+		*mat.NewDense(2, 2, []float64{2.15, -1.025, -2, 2.925}),
+	}
+	target_bias := []float64{0.5, -1.1}
+	if !functools.IsEqualMat(&target_filter, result_filter, 0.001) {
+		fmt.Println("== FILTER ==")
+		functools.PrintMatArray(&target_filter, 3)
+		functools.PrintMatArray(result_filter, 3)
+		t.Fail()
+	}
+	if !functools.IsEqual(&target_bias, result_bias, 0.001) {
+		fmt.Println("== BIAS == ")
+		fmt.Println(target_bias)
+		fmt.Println(*result_bias)
+		t.Fail()
+	}
+}
+
+func TestSGD_Conv_4(t *testing.T) {
+	conv_1 := conv.NewConv2D([2]int{2, 2}, 1, [2]int{3, 3}, 2, [2]int{1, 1}, [4]int{0, 0, 0, 0})
+	filter := []float64{
+		1, 2, -1, -2,
+		0, 2, 2, -4,
+	}
+	conv_1.LoadFilter(&filter)
+	pool := conv.NewMaxPool([2]int{2, 2}, [2]int{2, 2}, [2]int{2, 2}, 1)
+
+	input := []mat.Dense{
+		*mat.NewDense(3, 3, []float64{1, 3, -1, 2, 3, -2, 1, 0, 4}),
+		*mat.NewDense(3, 3, []float64{1, 2, 4, 0, 3, 3, 2, -2, -2}),
+	}
+	conv_1.Forward(&input)
+	pool.Forward(conv_1.DeflatOutput())
+
+	cnn := []conv.ConvLayer{&conv_1, &pool}
+	grads := mat.NewVecDense(1, []float64{5})
+	optimizer := optimizers.NewSGD(0.1, [2]int{1, 1})
+	optimizer.BackwardConv2DLayers(&cnn, grads)
+
+	result_filter := conv_1.GetFilter()
+	result_bias := conv_1.GetBias()
+	target_filter := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{0, 0.5, -1.5, -2}),
+		*mat.NewDense(2, 2, []float64{0, 0.5, 1, -3}),
+	}
+	target_bias := []float64{-0.5}
+	if !functools.IsEqualMat(&target_filter, result_filter, 0.001) {
+		fmt.Println("== FILTER ==")
+		functools.PrintMatArray(&target_filter, 3)
+		functools.PrintMatArray(result_filter, 3)
+		t.Fail()
+	}
+	if !functools.IsEqual(&target_bias, result_bias, 0.001) {
+		fmt.Println("== BIAS == ")
+		fmt.Println(target_bias)
+		fmt.Println(*result_bias)
+		t.Fail()
+	}
+}
+
 func TestSGD_Dense_1(t *testing.T) {
 	dense_1 := layers.NewDenseLayer(3, 2)
 	filter_1 := []float64{1, 2, 0, -3, 2, 3}
@@ -185,7 +279,48 @@ func TestSGD_Dense_1(t *testing.T) {
 	dense_2.LoadBias(&bias_2)
 	act_2 := layers.NewVReLU()
 
-	// input := mat.NewVecDense(3, []float64{-1, 0, 4})
+	input := mat.NewVecDense(3, []float64{-1, 0, 4})
+	output_1 := dense_1.Forward(input)
+	activated_1 := act_1.Forward(output_1)
+	output_2 := dense_2.Forward(activated_1)
+	act_2.Forward(output_2)
+
 	nn := []layers.Layer{&dense_1, &act_1, &dense_2, &act_2}
-	fmt.Printf("%v\n", nn)
+	optimizers := optimizers.NewSGD(0.1, [2]int{0, 0})
+	vec_grad := mat.NewVecDense(3, []float64{0.5, 0.1, 0.2})
+	optimizers.BackwardDenseLayers(&nn, vec_grad)
+
+	result_weights_1 := dense_1.GetWeightsData()
+	result_bias_1 := dense_1.GetBiasData()
+	result_weights_2 := dense_2.GetWeightsData()
+	result_bias_2 := dense_2.GetBiasData()
+	target_weights_1 := []float64{0.91, 2, 0.36, -2.84, 2, 2.36}
+	target_bias_1 := []float64{2.09, -5.16}
+	target_weights_2 := []float64{-2.05, 2.5, 0.99, 0.9, 1, -3}
+	target_bias_2 := []float64{-0.05, -0.01, 0}
+
+	if !functools.IsEqual(&target_weights_1, &result_weights_1, 0.001) {
+		fmt.Println("== I WEIGHTS ==")
+		fmt.Println(target_weights_1)
+		fmt.Println(result_weights_1)
+		t.Fail()
+	}
+	if !functools.IsEqual(&target_weights_2, &result_weights_2, 0.001) {
+		fmt.Println("== II WEIGHTS ==")
+		fmt.Println(target_weights_2)
+		fmt.Println(result_weights_2)
+		t.Fail()
+	}
+	if !functools.IsEqual(&target_bias_1, &result_bias_1, 0.001) {
+		fmt.Println("== I BIAS ==")
+		fmt.Println(target_bias_1)
+		fmt.Println(result_bias_1)
+		t.Fail()
+	}
+	if !functools.IsEqual(&target_bias_2, &result_bias_2, 0.001) {
+		fmt.Println("== II BIAS ==")
+		fmt.Println(target_bias_2)
+		fmt.Println(result_bias_2)
+		t.Fail()
+	}
 }

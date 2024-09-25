@@ -22,8 +22,18 @@ func NewSGD(learningRate float64, lastConvOutputSize [2]int) SGD {
 	}
 }
 
-func (opt *SGD) BackwardDenseLayers(denses *[]layers.DenseLayer, loss *mat.VecDense) *mat.VecDense {
-	return nil
+func (opt *SGD) BackwardDenseLayers(denses *[]layers.Layer, loss *mat.VecDense) *mat.VecDense {
+	grads := *loss
+	for i := len(*denses) - 1; i >= 0; i-- {
+		grads = *(*denses)[i].Backward(&grads)
+		// (*denses)[i].ApplyGrads(&opt.learningRate , (*denses)[i]., dBiasGrad *mat.VecDense)
+		(*denses)[i].ApplyGrads(
+			&opt.learningRate,
+			(*denses)[i].GetOutWeightsGrads(),
+			(*denses)[i].GetOutBiasGrads(),
+		)
+	}
+	return &grads
 }
 
 func (opt *SGD) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *mat.VecDense) {

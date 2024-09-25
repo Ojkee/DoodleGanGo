@@ -92,26 +92,45 @@ func (layer *DenseLayer) Backward(inGrads *mat.VecDense) *mat.VecDense {
 	layer.weightGrads.Mul(inGrads, layer.lastInput.T())
 
 	var result mat.VecDense
-	weightsT := layer.weights.T()
-	result.MulVec(weightsT, inGrads)
+	result.MulVec(layer.weights.T(), inGrads)
 	layer.lastOutGrads = result
 	return &layer.lastOutGrads
 }
 
-func (layer *DenseLayer) GetLastWeightGrads() *mat.Dense {
+func (layer *DenseLayer) GetOutWeightsGrads() *mat.Dense {
 	return &layer.weightGrads
 }
 
-func (layer *DenseLayer) GetLastBiasGrads() *mat.VecDense {
+func (layer *DenseLayer) GetOutBiasGrads() *mat.VecDense {
 	return &layer.lastInGrads
 }
 
-func (layer *DenseLayer) ApplyGradients(learningRate float64) {
-	var scaledGrads mat.Dense
-	scaledGrads.Scale(learningRate, &layer.weightGrads)
-	layer.weights.Sub(&layer.weights, &scaledGrads)
+func (layer *DenseLayer) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *mat.Dense,
+	dBiasGrad *mat.VecDense,
+) {
+	var scaledWeightGrads mat.Dense
+	scaledWeightGrads.Scale(*learningRate, &*dWeightsGrads)
+	layer.weights.Sub(&layer.weights, &scaledWeightGrads)
+
+	var scaledBiasGrads mat.VecDense
+	scaledBiasGrads.ScaleVec(*learningRate, dBiasGrad)
+	layer.bias.SubVec(&layer.bias, &scaledBiasGrads)
 }
 
 func (layer *DenseLayer) GetWeightsData() []float64 {
 	return layer.weights.RawMatrix().Data
+}
+
+func (layer *DenseLayer) GetWeights() *mat.Dense {
+	return &layer.weights
+}
+
+func (layer *DenseLayer) GetBiasData() []float64 {
+	return layer.bias.RawVector().Data
+}
+
+func (layer *DenseLayer) GetBias() *mat.VecDense {
+	return &layer.bias
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func TestMaxPool_1(t *testing.T) {
-	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{4, 4}, [2]int{2, 2})
+	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{4, 4}, [2]int{2, 2}, 1)
 	input := []mat.Dense{
 		*mat.NewDense(4, 4, []float64{
 			3, 1, 5, 4,
@@ -32,7 +32,7 @@ func TestMaxPool_1(t *testing.T) {
 }
 
 func TestMaxPool_2(t *testing.T) {
-	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{4, 4}, [2]int{2, 2})
+	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{4, 4}, [2]int{2, 2}, 2)
 	input := []mat.Dense{
 		*mat.NewDense(4, 4, []float64{
 			3, 1, 5, 4,
@@ -70,7 +70,7 @@ func TestMaxPool_2(t *testing.T) {
 }
 
 func TestMaxPool_3(t *testing.T) {
-	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{3, 3}, [2]int{2, 2})
+	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{3, 3}, [2]int{2, 2}, 1)
 	input := []mat.Dense{
 		*mat.NewDense(3, 3, []float64{
 			1, 2, 4,
@@ -84,5 +84,91 @@ func TestMaxPool_3(t *testing.T) {
 	}
 	if !reflect.DeepEqual(targetFlat, *layer.FlatOutput()) {
 		t.Fatal()
+	}
+}
+
+func TestMaxPool_Backward_1(t *testing.T) {
+	layer := conv.NewMaxPool([2]int{2, 2}, [2]int{4, 4}, [2]int{2, 2}, 2)
+	input := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			0, 0, 0, 1,
+			1, 0, 2, 0,
+			2, 2, 2, 3,
+			-2, 1, 3, 1,
+		}),
+		*mat.NewDense(4, 4, []float64{
+			2, 1, 2, 1,
+			1, 2, 1, 3,
+			0, -2, 2, 2,
+			-3, -4, 2, 2,
+		}),
+	}
+	layer.Forward(&input)
+	inGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{4, 2, -2, 3}),
+		*mat.NewDense(2, 2, []float64{3, 4, 1, -5}),
+	}
+	result := layer.Backward(&inGrads)
+	target := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			0, 0, 0, 0,
+			4, 0, 2, 0,
+			-2, 0, 0, 3,
+			0, 0, 0, 0,
+		}),
+		*mat.NewDense(4, 4, []float64{
+			3, 0, 0, 0,
+			0, 0, 0, 4,
+			1, 0, -5, 0,
+			0, 0, 0, 0,
+		}),
+	}
+	if !functools.IsEqualMat(&target, result, 0.001) {
+		functools.PrintMatArray(&target, 1)
+		functools.PrintMatArray(result, 1)
+		t.Fail()
+	}
+}
+
+func TestMaxPool_Backward_2(t *testing.T) {
+	layer := conv.NewMaxPool([2]int{3, 3}, [2]int{4, 4}, [2]int{3, 3}, 2)
+	input := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			2, 1, 5, -2,
+			1, 0, 3, 1,
+			0, 4, 1, -2,
+			4, 1, 2, 1,
+		}),
+		*mat.NewDense(4, 4, []float64{
+			1, 3, 1, 2,
+			0, 3, 4, 2,
+			9, 2, -2, 1,
+			3, 0, 2, 1,
+		}),
+	}
+	layer.Forward(&input)
+	inGrads := []mat.Dense{
+		*mat.NewDense(1, 1, []float64{4}),
+		*mat.NewDense(1, 1, []float64{-1}),
+	}
+	result := layer.Backward(&inGrads)
+	target := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			0, 0, 4, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+		}),
+		*mat.NewDense(4, 4, []float64{
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			-1, 0, 0, 0,
+			0, 0, 0, 0,
+		}),
+	}
+	if !functools.IsEqualMat(&target, result, 0.001) {
+		functools.PrintMatArray(&target, 1)
+		functools.PrintMatArray(result, 1)
+		t.Fail()
 	}
 }

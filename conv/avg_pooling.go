@@ -11,14 +11,16 @@ type AvgPool struct {
 	poolSize MatSize
 	stride   Stride
 	matPool  mat.Dense
+
+	SavedGrads
 }
 
-func NewAvgPool(poolSize, inputSize, stride [2]int) *AvgPool {
+func NewAvgPool(poolSize, inputSize, stride [2]int) AvgPool {
 	outputSize := [2]int{
 		(inputSize[0]-poolSize[0])/stride[0] + 1,
 		(inputSize[1]-poolSize[1])/stride[1] + 1,
 	}
-	return &AvgPool{
+	return AvgPool{
 		ConvType: ConvType{
 			inputSize:  MatSize{inputSize[0], inputSize[1]},
 			outputSize: MatSize{outputSize[0], outputSize[1]},
@@ -66,6 +68,58 @@ func (layer *AvgPool) Forward(input *[]mat.Dense) *[]mat.Dense {
 		layer.lastOutput[i] = pm
 	}
 	return &layer.lastOutput
+}
+
+func buildAvgGradMat(grads *mat.Dense, retSize, poolSize *MatSize) mat.Dense {
+	retData := make([]float64, retSize.FlatDim())
+	n, m := grads.Dims()
+	scaler := float64(1.0 / (float64(poolSize.FlatDim())))
+	for i := range n {
+		for j := range m {
+			cGrad := grads.At(i, j) * scaler
+			for pi := range poolSize.height {
+				for pj := range poolSize.width {
+					offset := (i*poolSize.height+pi)*retSize.width + j*poolSize.width + pj
+					retData[offset] = cGrad
+				}
+			}
+		}
+	}
+	return *mat.NewDense(retSize.height, retSize.width, retData)
+}
+
+func (layer *AvgPool) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
+	layer.lastInGrads = *inGrads
+	layer.lastOutGrads = make([]mat.Dense, len(*inGrads))
+	for i, grad := range *inGrads {
+		layer.lastOutGrads[i] = *mat.NewDense(
+			layer.inputSize.height,
+			layer.inputSize.width,
+			nil,
+		)
+		avgPoolGrad := buildAvgGradMat(&grad, &layer.inputSize, &layer.poolSize)
+		layer.lastOutGrads[i].Add(
+			&layer.lastOutGrads[i],
+			&avgPoolGrad,
+		)
+	}
+	return &layer.lastOutGrads
+}
+
+func (layer *AvgPool) ApplyGrads(
+	learningRate *float64,
+	dWeightsGrads *[]mat.Dense,
+	dBiasGrad *[]float64,
+) {
+	return
+}
+
+func (layer *AvgPool) DeflatOutGrads() *[]mat.Dense {
+	return &layer.lastOutGrads
+}
+
+func (layer *AvgPool) GetBiasGrads() *[]float64 {
+	return nil
 }
 
 func (layer *AvgPool) DeflatOutput() *[]mat.Dense {

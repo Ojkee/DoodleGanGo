@@ -19,28 +19,38 @@ type ActivationsLambdas struct {
 type ReLU struct {
 	SavedDataMat
 	ActivationsLambdas
+
+	SavedGrads
 }
 
 type LeakyReLU struct {
 	alpha float64
 	SavedDataMat
 	ActivationsLambdas
+
+	SavedGrads
 }
 
 type ELU struct {
 	alpha float64
 	SavedDataMat
 	ActivationsLambdas
+
+	SavedGrads
 }
 
 type Sigmoid struct {
 	SavedDataMat
 	ActivationsLambdas
+
+	SavedGrads
 }
 
 type Tanh struct {
 	SavedDataMat
 	ActivationsLambdas
+
+	SavedGrads
 }
 
 func ApplyOnInputMatDense(
@@ -97,12 +107,13 @@ func (layer *ReLU) Forward(input *[]mat.Dense) *[]mat.Dense {
 }
 
 func (layer *ReLU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
-	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
-	return &retVal
+	layer.lastInGrads = *inGrads
+	layer.lastOutGrads = BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &layer.lastOutGrads
 }
 
 func (layer *ReLU) DeflatOutGrads() *[]mat.Dense {
-	return nil
+	return &layer.lastOutGrads
 }
 
 func (layer *ReLU) GetBiasGrads() *[]float64 {
@@ -145,12 +156,13 @@ func (layer *LeakyReLU) Forward(input *[]mat.Dense) *[]mat.Dense {
 }
 
 func (layer *LeakyReLU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
-	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
-	return &retVal
+	layer.lastInGrads = *inGrads
+	layer.lastOutGrads = BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &layer.lastOutGrads
 }
 
 func (layer *LeakyReLU) DeflatOutGrads() *[]mat.Dense {
-	return nil
+	return &layer.lastOutGrads
 }
 
 func (layer *LeakyReLU) GetBiasGrads() *[]float64 {
@@ -199,12 +211,13 @@ func (layer *ELU) Forward(input *[]mat.Dense) *[]mat.Dense {
 }
 
 func (layer *ELU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
-	reVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
-	return &reVal
+	layer.lastInGrads = *inGrads
+	layer.lastOutGrads = BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &layer.lastOutGrads
 }
 
 func (layer *ELU) DeflatOutGrads() *[]mat.Dense {
-	return nil
+	return &layer.lastOutGrads
 }
 
 func (layer *ELU) GetBiasGrads() *[]float64 {
@@ -242,12 +255,13 @@ func (layer *Sigmoid) Forward(input *[]mat.Dense) *[]mat.Dense {
 }
 
 func (layer *Sigmoid) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
-	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
-	return &retVal
+	layer.lastInGrads = *inGrads
+	layer.lastOutGrads = BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &layer.lastOutGrads
 }
 
 func (layer *Sigmoid) DeflatOutGrads() *[]mat.Dense {
-	return nil
+	return &layer.lastOutGrads
 }
 
 func (layer *Sigmoid) GetBiasGrads() *[]float64 {
@@ -285,12 +299,13 @@ func (layer *Tanh) Forward(input *[]mat.Dense) *[]mat.Dense {
 }
 
 func (layer *Tanh) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
-	retVal := BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
-	return &retVal
+	layer.lastInGrads = *inGrads
+	layer.lastOutGrads = BackwardApply(layer.lambdaPrime, layer.lastInput, inGrads)
+	return &layer.lastOutGrads
 }
 
 func (layer *Tanh) DeflatOutGrads() *[]mat.Dense {
-	return nil
+	return &layer.lastOutGrads
 }
 
 func (layer *Tanh) GetBiasGrads() *[]float64 {

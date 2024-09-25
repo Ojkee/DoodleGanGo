@@ -110,14 +110,14 @@ func TestDenseLayer_Backward_1(t *testing.T) {
 		fmt.Println(outGrads)
 		t.Fatal()
 	}
-	if !reflect.DeepEqual(targetWeightsGrads, layer.GetLastWeightGrads()) {
+	if !reflect.DeepEqual(targetWeightsGrads, layer.GetOutWeightsGrads()) {
 		fmt.Println(targetWeightsGrads)
-		fmt.Println(layer.GetLastWeightGrads())
+		fmt.Println(layer.GetOutWeightsGrads())
 		t.Fatal()
 	}
-	if !reflect.DeepEqual(targetBiasGrads, layer.GetLastBiasGrads()) {
+	if !reflect.DeepEqual(targetBiasGrads, layer.GetOutBiasGrads()) {
 		fmt.Println(targetBiasGrads)
-		fmt.Println(layer.GetLastBiasGrads())
+		fmt.Println(layer.GetOutBiasGrads())
 		t.Fatal()
 	}
 }
@@ -156,20 +156,21 @@ func TestDenseLayer_Backward_2(t *testing.T) {
 		fmt.Println(outGrads)
 		t.Fatal()
 	}
-	if !reflect.DeepEqual(targetWeightsGrads, layer.GetLastWeightGrads()) {
+	if !reflect.DeepEqual(targetWeightsGrads, layer.GetOutWeightsGrads()) {
 		fmt.Println("--WEIGHT GRADS--")
 		fmt.Println(targetWeightsGrads)
-		fmt.Println(layer.GetLastWeightGrads())
+		fmt.Println(layer.GetOutWeightsGrads())
 		t.Fatal()
 	}
-	if !reflect.DeepEqual(targetBiasGrads, layer.GetLastBiasGrads()) {
+	if !reflect.DeepEqual(targetBiasGrads, layer.GetOutBiasGrads()) {
 		fmt.Println("--BIAS GRADS--")
 		fmt.Println(targetBiasGrads)
-		fmt.Println(layer.GetLastBiasGrads())
+		fmt.Println(layer.GetOutBiasGrads())
 		t.Fatal()
 	}
 
-	layer.ApplyGradients(0.5)
+	learningRate := 0.5
+	layer.ApplyGrads(&learningRate, layer.GetOutWeightsGrads(), layer.GetOutBiasGrads())
 	targetUpdatedWeights := []float64{
 		1, 2, -4,
 		0, 0.25, 4,
@@ -215,20 +216,21 @@ func TestDenseLayer_Backward_3(t *testing.T) {
 		fmt.Println(outGrads)
 		t.Fatal()
 	}
-	if !reflect.DeepEqual(targetWeightsGrads, layer.GetLastWeightGrads()) {
+	if !reflect.DeepEqual(targetWeightsGrads, layer.GetOutWeightsGrads()) {
 		fmt.Println("--WEIGHT GRADS--")
 		fmt.Println(targetWeightsGrads)
-		fmt.Println(layer.GetLastWeightGrads())
+		fmt.Println(layer.GetOutWeightsGrads())
 		t.Fatal()
 	}
-	if !reflect.DeepEqual(targetBiasGrads, layer.GetLastBiasGrads()) {
+	if !reflect.DeepEqual(targetBiasGrads, layer.GetOutBiasGrads()) {
 		fmt.Println("--BIAS GRADS--")
 		fmt.Println(targetBiasGrads)
-		fmt.Println(layer.GetLastBiasGrads())
+		fmt.Println(layer.GetOutBiasGrads())
 		t.Fatal()
 	}
 
-	layer.ApplyGradients(0.25)
+	learningRate := 0.25
+	layer.ApplyGrads(&learningRate, layer.GetOutWeightsGrads(), layer.GetOutBiasGrads())
 	targetUpdatedWeights := []float64{
 		-3.5, 1.25,
 	}

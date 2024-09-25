@@ -89,3 +89,74 @@ func TestPool_3(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestPool_Backward_1(t *testing.T) {
+	layer := conv.NewAvgPool([2]int{2, 2}, [2]int{4, 4}, [2]int{2, 2})
+	inGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{1, 2, 4, -1}),
+	}
+	result := layer.Backward(&inGrads)
+	target := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			1.0 / 4.0, 1.0 / 4.0, 1.0 / 2.0, 1.0 / 2.0,
+			1.0 / 4.0, 1.0 / 4.0, 1.0 / 2.0, 1.0 / 2.0,
+			1.0, 1.0, -1.0 / 4.0, -1.0 / 4.0,
+			1.0, 1.0, -1.0 / 4.0, -1.0 / 4.0,
+		}),
+	}
+	if !functools.IsEqualMat(&target, result, 0.001) {
+		functools.PrintMatArray(&target, 2)
+		functools.PrintMatArray(result, 2)
+		t.Fail()
+	}
+}
+
+func TestPool_Backward_2(t *testing.T) {
+	layer := conv.NewAvgPool([2]int{2, 2}, [2]int{5, 5}, [2]int{2, 2})
+	inGrads := []mat.Dense{
+		*mat.NewDense(2, 2, []float64{1, 2, 4, -1}),
+	}
+	result := layer.Backward(&inGrads)
+	target := []mat.Dense{
+		*mat.NewDense(5, 5, []float64{
+			1.0 / 4.0, 1.0 / 4.0, 1.0 / 2.0, 1.0 / 2.0, 0.0,
+			1.0 / 4.0, 1.0 / 4.0, 1.0 / 2.0, 1.0 / 2.0, 0.0,
+			1.0, 1.0, -1.0 / 4.0, -1.0 / 4.0, 0.0,
+			1.0, 1.0, -1.0 / 4.0, -1.0 / 4.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0,
+		}),
+	}
+	if !functools.IsEqualMat(&target, result, 0.001) {
+		functools.PrintMatArray(&target, 2)
+		functools.PrintMatArray(result, 2)
+		t.Fail()
+	}
+}
+
+func TestPool_Backward_3(t *testing.T) {
+	layer := conv.NewAvgPool([2]int{3, 3}, [2]int{4, 4}, [2]int{3, 3})
+	inGrads := []mat.Dense{
+		*mat.NewDense(1, 1, []float64{3}),
+		*mat.NewDense(1, 1, []float64{18}),
+	}
+	result := layer.Backward(&inGrads)
+	target := []mat.Dense{
+		*mat.NewDense(4, 4, []float64{
+			3.0 / 9.0, 3.0 / 9.0, 3.0 / 9.0, 0,
+			3.0 / 9.0, 3.0 / 9.0, 3.0 / 9.0, 0,
+			3.0 / 9.0, 3.0 / 9.0, 3.0 / 9.0, 0,
+			0, 0, 0, 0,
+		}),
+		*mat.NewDense(4, 4, []float64{
+			2, 2, 2, 0,
+			2, 2, 2, 0,
+			2, 2, 2, 0,
+			0, 0, 0, 0,
+		}),
+	}
+	if !functools.IsEqualMat(&target, result, 0.001) {
+		functools.PrintMatArray(&target, 2)
+		functools.PrintMatArray(result, 2)
+		t.Fail()
+	}
+}
