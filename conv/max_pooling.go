@@ -100,20 +100,8 @@ func (layer *MaxPool) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 	return &layer.lastOutGrads
 }
 
-func (layer *MaxPool) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
-}
-
 func (layer *MaxPool) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
-}
-
-func (layer *MaxPool) GetBiasGrads() *[]float64 {
-	return nil
 }
 
 func (layer *MaxPool) DeflatOutput() *[]mat.Dense {

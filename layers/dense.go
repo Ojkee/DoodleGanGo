@@ -21,7 +21,7 @@ type DenseLayer struct {
 func NewDenseLayer(nInputs, nNeurons int) DenseLayer {
 	if nInputs < 0 || nNeurons < 0 {
 		mess := fmt.Sprintf(
-			"Number of inputs ans number of neurons must be positive,\n\thave: %d, %d",
+			"NewDenseLayer fail:\n\tNumber of inputs ans number of neurons must be positive,\n\thave: %d, %d",
 			nInputs,
 			nNeurons,
 		)
@@ -37,7 +37,7 @@ func NewDenseLayer(nInputs, nNeurons int) DenseLayer {
 
 func (layer *DenseLayer) InitFilterRandom(minRange, maxRange float64) {
 	if maxRange < minRange {
-		panic("minRange can't be greater than maxRange")
+		panic("InitFilterRandom fail:\n\tminRange can't be greater than maxRange")
 	}
 	nWeights := layer.nInputs * layer.nNeurons
 	randWeights := make([]float64, nWeights)
@@ -54,7 +54,7 @@ func (layer *DenseLayer) InitFilterRandom(minRange, maxRange float64) {
 func (layer *DenseLayer) LoadWeights(source *[]float64) {
 	if len(*source) != layer.nInputs*layer.nNeurons {
 		mess := fmt.Sprintf(
-			"Source length and dimentions doesn't match: %d * %d != %d",
+			"LoadWeight fail:\n\tSource length and dimentions doesn't match: %d * %d != %d",
 			layer.nNeurons,
 			layer.nInputs,
 			len(*source),
@@ -133,4 +133,8 @@ func (layer *DenseLayer) GetBiasData() []float64 {
 
 func (layer *DenseLayer) GetBias() *mat.VecDense {
 	return &layer.bias
+}
+
+func (layer *DenseLayer) WeightsSize() (int, int) {
+	return layer.nNeurons, layer.nInputs
 }

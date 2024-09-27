@@ -111,22 +111,6 @@ func (layer *VReLU) Backward(inGrads *mat.VecDense) *mat.VecDense {
 	return &retVal
 }
 
-func (layer *VReLU) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *mat.Dense,
-	dBiasGrad *mat.VecDense,
-) {
-	return
-}
-
-func (layer *VReLU) GetOutWeightsGrads() *mat.Dense {
-	return nil
-}
-
-func (layer *VReLU) GetOutBiasGrads() *mat.VecDense {
-	return nil
-}
-
 func NewVLeakyReLU(alpha float64) VLeakyReLU {
 	if alpha < 0 || alpha > 1 {
 		panic("Parameter alpha in LeakyReLU must be in range [0, 1]")
@@ -157,22 +141,6 @@ func (layer *VLeakyReLU) Forward(input *mat.VecDense) *mat.VecDense {
 func (layer *VLeakyReLU) Backward(inGrads *mat.VecDense) *mat.VecDense {
 	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
 	return &retVal
-}
-
-func (layer *VLeakyReLU) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *mat.Dense,
-	dBiasGrad *mat.VecDense,
-) {
-	return
-}
-
-func (layer *VLeakyReLU) GetOutWeightsGrads() *mat.Dense {
-	return nil
-}
-
-func (layer *VLeakyReLU) GetOutBiasGrads() *mat.VecDense {
-	return nil
 }
 
 func NewVELU(alpha ...float64) VELU {
@@ -213,22 +181,6 @@ func (layer *VELU) Backward(inGrads *mat.VecDense) *mat.VecDense {
 	return &retVal
 }
 
-func (layer *VELU) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *mat.Dense,
-	dBiasGrad *mat.VecDense,
-) {
-	return
-}
-
-func (layer *VELU) GetOutWeightsGrads() *mat.Dense {
-	return nil
-}
-
-func (layer *VELU) GetOutBiasGrads() *mat.VecDense {
-	return nil
-}
-
 func NewVSigmoid() VSigmoid {
 	act := func(v float64) float64 {
 		return 1 / (1 + math.Exp(-v))
@@ -256,22 +208,6 @@ func (layer *VSigmoid) Backward(inGrads *mat.VecDense) *mat.VecDense {
 	return &retVal
 }
 
-func (layer *VSigmoid) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *mat.Dense,
-	dBiasGrad *mat.VecDense,
-) {
-	return
-}
-
-func (layer *VSigmoid) GetOutWeightsGrads() *mat.Dense {
-	return nil
-}
-
-func (layer *VSigmoid) GetOutBiasGrads() *mat.VecDense {
-	return nil
-}
-
 func NewVTanh() VTanh {
 	act := func(v float64) float64 {
 		return math.Tanh(v)
@@ -297,20 +233,4 @@ func (layer *VTanh) Forward(input *mat.VecDense) *mat.VecDense {
 func (layer *VTanh) Backward(inGrads *mat.VecDense) *mat.VecDense {
 	retVal := BackwardApply(layer.VlambdaPrime, &layer.lastInput, inGrads)
 	return &retVal
-}
-
-func (layer *VTanh) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *mat.Dense,
-	dBiasGrad *mat.VecDense,
-) {
-	return
-}
-
-func (layer *VTanh) GetOutWeightsGrads() *mat.Dense {
-	return nil
-}
-
-func (layer *VTanh) GetOutBiasGrads() *mat.VecDense {
-	return nil
 }

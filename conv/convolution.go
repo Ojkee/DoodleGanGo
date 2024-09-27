@@ -56,7 +56,8 @@ func NewConv2D(
 	stride [2]int,
 	padding [4]int, // N, E, S, W
 ) Conv2D {
-	if kernelSize[0] > inputSize[0] || kernelSize[1] > inputSize[1] {
+	if kernelSize[0] > inputSize[0]+padding[0]+padding[2] ||
+		kernelSize[1] > inputSize[1]+padding[1]+padding[3] {
 		mess := fmt.Sprintf(
 			"NewConv2D fail:\n\tKernel size (%d x %d) can't be greater than input size (%d x %d)",
 			kernelSize[0], kernelSize[1],
@@ -163,7 +164,7 @@ func (layer *Conv2D) InitFilterRandom(minRange, maxRange float64) {
 	if maxRange < minRange {
 		panic("Filter random initialization fail:\n\tminRange can't be greater than maxRange")
 	}
-	numChannels := layer.numChannels()
+	numChannels := layer.NumChannels()
 	numPixelsKernel := layer.kernelSize.FlatDim()
 	newFilter := make([]mat.Dense, numChannels)
 	matValues := make([]float64, numPixelsKernel)
@@ -183,7 +184,7 @@ func (layer *Conv2D) InitFilterRandom(minRange, maxRange float64) {
 }
 
 func (layer *Conv2D) LoadFilter(source *[]float64) {
-	numChannels := layer.numChannels()
+	numChannels := layer.NumChannels()
 	numPixelsKernel := layer.kernelSize.FlatDim()
 	if len(*source) != numChannels*numPixelsKernel {
 		mess := fmt.Sprintf(
@@ -301,9 +302,9 @@ func (layer *Conv2D) ApplyGrads(
 	for b := range layer.numberOfFilters {
 		layer.bias[b] -= *learningRate * (*dBiasGrad)[b]
 	}
-	for f := range layer.numChannels() {
+	for f := range layer.NumChannels() {
 		var scaledGrads mat.Dense
-		scaledGrads.Scale(*learningRate, &layer.filterGrads[f])
+		scaledGrads.Scale(*learningRate, &(*dWeightsGrads)[f])
 		layer.filters[f].Sub(&layer.filters[f], &scaledGrads)
 	}
 }
@@ -316,8 +317,12 @@ func (layer *Conv2D) GetBias() *[]float64 {
 	return &layer.bias
 }
 
-func (layer *Conv2D) numChannels() int {
+func (layer *Conv2D) NumChannels() int {
 	return layer.numberOfFilters * layer.inputChannels
+}
+
+func (layer *Conv2D) NumFilters() int {
+	return layer.numberOfFilters
 }
 
 func getPaddedInputSize(inputSize MatSize, padding Padding) MatSize {
@@ -420,7 +425,7 @@ func addPadding(source *mat.Dense, padding Padding) *mat.Dense {
 }
 
 func (layer *Conv2D) calcKernelBiasGrads(inGrads *[]mat.Dense) {
-	layer.filterGrads = make([]mat.Dense, layer.numChannels())
+	layer.filterGrads = make([]mat.Dense, layer.NumChannels())
 	layer.biasGrads = make([]float64, layer.numberOfFilters)
 
 	for f := range layer.numberOfFilters {

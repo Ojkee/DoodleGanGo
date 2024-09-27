@@ -1,6 +1,6 @@
 module DoodleGan
 
-go 1.22.5
+go 1.23.1
 
 require (
 	git.sr.ht/~sbinet/gg v0.5.0 // indirect

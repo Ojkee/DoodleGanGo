@@ -106,20 +106,8 @@ func (layer *AvgPool) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 	return &layer.lastOutGrads
 }
 
-func (layer *AvgPool) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
-}
-
 func (layer *AvgPool) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
-}
-
-func (layer *AvgPool) GetBiasGrads() *[]float64 {
-	return nil
 }
 
 func (layer *AvgPool) DeflatOutput() *[]mat.Dense {

@@ -116,18 +116,6 @@ func (layer *ReLU) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
 }
 
-func (layer *ReLU) GetBiasGrads() *[]float64 {
-	return nil
-}
-
-func (layer *ReLU) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
-}
-
 func NewLeakyReLU(alpha float64) LeakyReLU {
 	if alpha < 0 || alpha > 1 {
 		panic("Parameter alpha in LeakyReLU must be in range [0, 1]")
@@ -163,18 +151,6 @@ func (layer *LeakyReLU) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 
 func (layer *LeakyReLU) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
-}
-
-func (layer *LeakyReLU) GetBiasGrads() *[]float64 {
-	return nil
-}
-
-func (layer *LeakyReLU) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
 }
 
 func NewELU(alpha ...float64) ELU {
@@ -220,18 +196,6 @@ func (layer *ELU) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
 }
 
-func (layer *ELU) GetBiasGrads() *[]float64 {
-	return nil
-}
-
-func (layer *ELU) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
-}
-
 func NewSigmoid() Sigmoid {
 	act := func(i, j int, v float64) float64 {
 		return 1 / (1 + math.Exp(-v))
@@ -264,18 +228,6 @@ func (layer *Sigmoid) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
 }
 
-func (layer *Sigmoid) GetBiasGrads() *[]float64 {
-	return nil
-}
-
-func (layer *Sigmoid) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
-}
-
 func NewTanh() Tanh {
 	act := func(i, j int, v float64) float64 {
 		return math.Tanh(v)
@@ -306,16 +258,4 @@ func (layer *Tanh) Backward(inGrads *[]mat.Dense) *[]mat.Dense {
 
 func (layer *Tanh) DeflatOutGrads() *[]mat.Dense {
 	return &layer.lastOutGrads
-}
-
-func (layer *Tanh) GetBiasGrads() *[]float64 {
-	return nil
-}
-
-func (layer *Tanh) ApplyGrads(
-	learningRate *float64,
-	dWeightsGrads *[]mat.Dense,
-	dBiasGrad *[]float64,
-) {
-	return
 }
