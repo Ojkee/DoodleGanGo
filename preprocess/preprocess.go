@@ -12,12 +12,12 @@ func GetSplitData(
 	numberOfSamples, stride int,
 	trainRatio float32,
 ) ([][]uint8, [][]uint8, error) {
+	if numberOfSamples < 0 {
+		return nil, nil, errors.New("Dataset size can't be negative")
+	}
 	rawData, err := GetRawData(fileName)
 	if err != nil {
 		return nil, nil, err
-	}
-	if numberOfSamples < 0 {
-		return nil, nil, errors.New("Dataset size can't be negative")
 	}
 	numberOfSamples = min(numberOfSamples, len(rawData)/stride)
 	reshapedData := Reshape(rawData[:numberOfSamples*stride], stride)
@@ -27,16 +27,14 @@ func GetSplitData(
 
 func GetRawData(fileName string) ([]uint8, error) {
 	dataFile, err := os.Open(fileName)
+	defer dataFile.Close()
 	if err != nil {
 		return nil, err
 	}
-	defer dataFile.Close()
-
 	npyReader, err := npyio.NewReader(dataFile)
 	if err != nil {
 		return nil, err
 	}
-
 	var raw []uint8
 	err = npyReader.Read(&raw)
 	if err != nil {

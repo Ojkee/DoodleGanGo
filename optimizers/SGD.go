@@ -106,7 +106,7 @@ func (opt *SGD) BackwardDenseLayers(denses *[]layers.Layer, loss *mat.VecDense) 
 					trainableLayer.GetOutBiasGrads(),
 				)
 			} else {
-				// Non Nestrov
+				// Non Nesterov
 				weightGrads := trainableLayer.GetOutWeightsGrads()
 				biasGrads := trainableLayer.GetOutBiasGrads()
 				opt.denseVelocities[i].updateWeight(weightGrads, &opt.momentum, &opt.momentumComplement)

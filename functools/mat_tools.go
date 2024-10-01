@@ -79,10 +79,23 @@ func IsEqual(A, B *[]float64, eps float64) bool {
 	return true
 }
 
+func IsEqualVal(A, B *float64, eps float64) bool {
+	if math.Abs(*A-*B) > eps {
+		return false
+	}
+	return true
+}
+
 func RepeatSlice[T any](v T, n int) []T {
 	result := make([]T, n)
 	for i := range n {
 		result[i] = v
 	}
 	return result
+}
+
+func ArgToSliceLabel(n, idx int) []float64 {
+	retVal := make([]float64, n)
+	retVal[idx] = 1.0
+	return retVal
 }
