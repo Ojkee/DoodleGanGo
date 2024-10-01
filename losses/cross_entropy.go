@@ -30,7 +30,13 @@ func (loss *CrossEntropy) CalculateTotal(yHat, y *[]mat.VecDense) float64 {
 	for i := range loss.batchSizeInt {
 		for j := range loss.outputClasses {
 			label := (*y)[i].AtVec(j)
-			predLog := math.Log((*yHat)[i].AtVec(j))
+			pred := (*yHat)[i].AtVec(j)
+			if pred == 0.0 && label == 1 {
+				pred = 10e-8
+			} else if pred == 1 && label == 0 {
+				pred = 0.99999999
+			}
+			predLog := math.Log(pred)
 			retSum -= label * predLog
 		}
 	}
