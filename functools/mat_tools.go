@@ -27,15 +27,6 @@ func PrintMat(A *mat.Dense, precision int) {
 	}
 }
 
-func FlattenMat(A *mat.Dense) []float64 {
-	m, _ := (*A).Dims()
-	result := make([]float64, 0)
-	for r := range m {
-		result = append(result, (*A).RawRowView(r)...)
-	}
-	return result
-}
-
 func IsEqualMat(A, B *[]mat.Dense, eps float64) bool {
 	if len(*A) != len(*B) {
 		return false
@@ -97,5 +88,29 @@ func RepeatSlice[T any](v T, n int) []T {
 func ArgToSliceLabel(n, idx int) []float64 {
 	retVal := make([]float64, n)
 	retVal[idx] = 1.0
+	return retVal
+}
+
+func VecToMatSlice(source *mat.VecDense, height, width int) []mat.Dense {
+	channelPixels := height * width
+	numChannels := len(source.RawVector().Data) / channelPixels
+	retVal := make([]mat.Dense, numChannels)
+	sourceData := source.RawVector().Data
+	for i := range numChannels {
+		retVal[i] = *mat.NewDense(
+			height,
+			width,
+			sourceData[i*channelPixels:(i+1)*channelPixels],
+		)
+	}
+	return retVal
+}
+
+func FlattenMat(A *mat.Dense) []float64 {
+	m, _ := (*A).Dims()
+	retVal := make([]float64, 0)
+	for r := range m {
+		retVal = append(retVal, (*A).RawRowView(r)...)
+	}
 	return retVal
 }

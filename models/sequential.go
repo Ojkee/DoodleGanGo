@@ -3,13 +3,21 @@ package models
 import (
 	"DoodleGan/conv"
 	"DoodleGan/layers"
+	"DoodleGan/losses"
 	"DoodleGan/optimizers"
 )
 
 type Sequential struct {
-	denseLayers []*layers.Layer
-	convLayers  []*conv.ConvLayer
-	optimizer   optimizers.Optimizer
+	batchSize int
+	epochs    int
+
+	denseLayers  []*layers.Layer
+	convLayers   []*conv.ConvLayer
+	optimizer    *optimizers.Optimizer
+	lossFunction *losses.Loss
+
+	correctGuesses uint
+	totalGuesses   uint
 }
 
 func NewSequential() Sequential {
@@ -31,5 +39,9 @@ func (model *Sequential) SetOptimizer(opt *optimizers.Optimizer) {
 	model.optimizer = opt
 }
 
-func (model *Sequential) Train(X *[]float64, batchSize, epochs int) {
+func (model *Sequential) SetLoss(lossFunction *losses.Loss) {
+	model.lossFunction = lossFunction
+}
+
+func (model *Sequential) Train(X, y *[]float64) {
 }
