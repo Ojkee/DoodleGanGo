@@ -1,7 +1,6 @@
 package optimizers
 
 import (
-	"math"
 	"slices"
 
 	"gonum.org/v1/gonum/mat"
@@ -12,18 +11,9 @@ import (
 )
 
 type RMSProp struct {
-	learningRate       float64
-	momentum           float64
-	momentumComplement float64
-	rho                float64
-	rhoComplement      float64
-	eps                float64
+	learningRate float64
 
-	rootFunc func(i, j int, v float64) float64
-
-	convSquared  map[int]*filterMomentum // key: idx of conv layer in passed architecture
-	denseSquared map[int]*denseMomentum  // key: idx of dense layer in passed architecture
-
+	rhoSquareMechanism
 	lastConvOutputSize conv.MatSize
 }
 
@@ -32,21 +22,11 @@ func NewRMSProp(learningRate, rho, eps float64) RMSProp {
 		panic("NewRMSProp fail:\n\tLearning Rate can't be less or equal 0")
 	}
 	if rho < 0 || rho > 1 {
-		panic("NewRMSProp fail:\n\trho must be in range [0, 1]")
+		panic("NewRMSProp fail:\n\trho must be in range [0, 1)")
 	}
-	rootFunc_ := func(i, j int, v float64) float64 {
-		if v == 0.0 {
-			v += eps
-		}
-		return math.Sqrt(v)
-	}
-
 	return RMSProp{
-		learningRate:  learningRate,
-		rho:           rho,
-		rhoComplement: 1.0 - rho,
-		eps:           eps,
-		rootFunc:      rootFunc_,
+		learningRate:       learningRate,
+		rhoSquareMechanism: newRhoSquareMechanism(rho, eps),
 	}
 }
 
@@ -60,8 +40,7 @@ func (opt *RMSProp) PreTrainInit(
 		lastConvOutputSize[1],
 	)
 	if opt.rho != 0.0 {
-		opt.denseSquared = initDenseVelocities(denseLayers)
-		opt.convSquared = initConvVelocities(convLayers)
+		opt.initRhoMechanizm(convLayers, denseLayers)
 	}
 }
 
@@ -73,23 +52,22 @@ func (opt *RMSProp) BackwardDenseLayers(denses *[]layers.Layer, loss *mat.VecDen
 			if opt.rho == 0.0 {
 				trainableLayer.ApplyGrads(
 					&opt.learningRate,
-					zeroRhoActivateDense(trainableLayer.GetOutWeightsGrads()),
-					zeroRhoActivateVec(trainableLayer.GetOutBiasGrads()),
+					opt.zeroRhoActivateDense(trainableLayer.GetOutWeightsGrads()),
+					opt.zeroRhoActivateVec(trainableLayer.GetOutBiasGrads()),
 				)
 			} else {
-				denseGradsSquared, vecBiasGradsSquared := squareDenseLayerGrads(
+				denseGradsSquared, vecBiasGradsSquared := opt.squareDenseLayerGrads(
 					trainableLayer.GetOutWeightsGrads(),
 					trainableLayer.GetOutBiasGrads(),
 				)
-				opt.denseSquared[i].updateWeight(&denseGradsSquared, &opt.rho, &opt.rhoComplement)
-				opt.denseSquared[i].updateBias(&vecBiasGradsSquared, &opt.rho, &opt.rhoComplement)
+				opt.rhoUpdateDense(i, &denseGradsSquared, &vecBiasGradsSquared)
 				scaledGrads := opt.gradsScaleSquaredDense(
 					trainableLayer.GetOutWeightsGrads(),
-					&opt.denseSquared[i].weightsVelocities,
+					opt.getRhoSquareDenseWeights(i),
 				)
 				scaledBiasGrads := opt.gradsScaleSquaredVec(
 					trainableLayer.GetOutBiasGrads(),
-					&opt.denseSquared[i].biasesVelocities,
+					opt.getRhoSquareDenseBias(i),
 				)
 				trainableLayer.ApplyGrads(
 					&opt.learningRate,
@@ -108,29 +86,28 @@ func (opt *RMSProp) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *
 		opt.lastConvOutputSize.Height(),
 		opt.lastConvOutputSize.Width(),
 	)
-	for i := len(*convs2D) - 1; i >= 0; i-- {
-		gradsMat = *(*convs2D)[i].Backward(&gradsMat)
+	for i, convLayer := range slices.Backward(*convs2D) {
+		gradsMat = *convLayer.Backward(&gradsMat)
 		if trainableLayer, ok := (*convs2D)[i].(conv.ConvLayerTrainable); ok {
 			if opt.rho == 0.0 {
 				trainableLayer.ApplyGrads(
 					&opt.learningRate,
-					zeroRhoActivateDenseSlice(trainableLayer.GetFilterGrads()),
-					zeroRhoActivateFloatSlice(trainableLayer.GetBiasGrads()),
+					opt.zeroRhoActivateDenseSlice(trainableLayer.GetFilterGrads()),
+					opt.zeroRhoActivateFloatSlice(trainableLayer.GetBiasGrads()),
 				)
 			} else {
-				convGradsSquared, convBiasSquared := squareConvLayerGrads(
+				convGradsSquared, convBiasSquared := opt.squareConvLayerGrads(
 					trainableLayer.GetFilterGrads(),
 					trainableLayer.GetBiasGrads(),
 				)
-				opt.convSquared[i].updateFilter(&convGradsSquared, &opt.rho, &opt.rhoComplement)
-				opt.convSquared[i].updateBias(&convBiasSquared, &opt.rho, &opt.rhoComplement)
+				opt.rhoUpdateConv(i, &convGradsSquared, &convBiasSquared)
 				scaledGrads := opt.gradsScaleSquaredConv(
 					trainableLayer.GetFilterGrads(),
-					&opt.convSquared[i].channelsVelocities,
+					opt.getRhoSquareConvWeigts(i),
 				)
 				scaledBiasGrads := opt.gradsScaleSquaredFloatSlice(
 					trainableLayer.GetBiasGrads(),
-					&opt.convSquared[i].biasesVelocities,
+					opt.getRhoSquareConvBias(i),
 				)
 				trainableLayer.ApplyGrads(
 					&opt.learningRate,
@@ -140,120 +117,4 @@ func (opt *RMSProp) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *
 			}
 		}
 	}
-}
-
-func zeroRhoActivate(v *float64) float64 {
-	if *v > 0.0 {
-		return 1.0
-	} else if *v < 0.0 {
-		return -1.0
-	}
-	return 0.0
-}
-
-func zeroRhoActivateDense(grads *mat.Dense) *mat.Dense {
-	var retVal mat.Dense
-	retVal.Apply(func(i, j int, v float64) float64 {
-		return zeroRhoActivate(&v)
-	}, grads)
-	return &retVal
-}
-
-func zeroRhoActivateVec(grads *mat.VecDense) *mat.VecDense {
-	var retVal mat.VecDense
-	for i, v := range grads.RawVector().Data {
-		retVal.SetVec(i, zeroRhoActivate(&v))
-	}
-	return &retVal
-}
-
-func zeroRhoActivateFloatSlice(grads *[]float64) *[]float64 {
-	n := len(*grads)
-	retVal := make([]float64, n)
-	for i, v := range *grads {
-		retVal[i] = zeroRhoActivate(&v)
-	}
-	return &retVal
-}
-
-func zeroRhoActivateDenseSlice(grads *[]mat.Dense) *[]mat.Dense {
-	retVal := make([]mat.Dense, len(*grads))
-	for i, gradDense := range *grads {
-		retVal[i] = *zeroRhoActivateDense(&gradDense)
-	}
-	return &retVal
-}
-
-// TODO Preallocate space for squared grads instead of allocating every opt step
-func squareDenseLayerGrads(
-	denseGrads *mat.Dense,
-	biasGrads *mat.VecDense,
-) (mat.Dense, mat.VecDense) {
-	var denseGradsRet mat.Dense
-	denseGrads.MulElem(
-		denseGrads,
-		denseGrads,
-	)
-	var vecBiasGradsRet mat.VecDense
-	vecBiasGradsRet.MulElemVec(
-		biasGrads,
-		biasGrads,
-	)
-	return denseGradsRet, vecBiasGradsRet
-}
-
-// TODO Preallocate space for squared grads instead of allocating every opt step
-func squareConvLayerGrads(
-	convGrads *[]mat.Dense,
-	biasGrads *[]float64,
-) ([]mat.Dense, []float64) {
-	convGradsRet := make([]mat.Dense, len(*convGrads))
-	convBiasRet := make([]float64, len(*biasGrads))
-	for i, convGrad := range *convGrads {
-		convGradsRet[i].MulElem(&convGrad, &convGrad)
-	}
-	for i, biasGrad := range *biasGrads {
-		convBiasRet[i] = biasGrad * biasGrad
-	}
-	return convGradsRet, convBiasRet
-}
-
-func (opt *RMSProp) gradsScaleSquaredDense(grads, gradsS *mat.Dense) mat.Dense {
-	var rootedS mat.Dense
-	rootedS.Apply(opt.rootFunc, gradsS)
-	var retVal mat.Dense
-	retVal.DivElem(grads, &rootedS)
-	return retVal
-}
-
-func (opt *RMSProp) gradsScaleSquaredVec(grads, gradsS *mat.VecDense) mat.VecDense {
-	retVal := mat.NewVecDense(grads.Len(), nil)
-	for i := range grads.Len() {
-		toSquare := gradsS.AtVec(i)
-		if toSquare == 0.0 {
-			toSquare += opt.eps
-		}
-		retVal.SetVec(i, grads.AtVec(i)/math.Sqrt(toSquare))
-	}
-	return *retVal
-}
-
-func (opt *RMSProp) gradsScaleSquaredConv(grads, gradsS *[]mat.Dense) []mat.Dense {
-	retVal := make([]mat.Dense, len(*grads))
-	for i := range retVal {
-		retVal[i] = opt.gradsScaleSquaredDense(&(*grads)[i], &(*gradsS)[i])
-	}
-	return retVal
-}
-
-func (opt *RMSProp) gradsScaleSquaredFloatSlice(grads, gradsS *[]float64) []float64 {
-	retVal := make([]float64, len(*grads))
-	for i := range retVal {
-		toSquare := (*gradsS)[i]
-		if toSquare == 0.0 {
-			toSquare += opt.eps
-		}
-		retVal[i] = (*grads)[i] / math.Sqrt(toSquare)
-	}
-	return retVal
 }

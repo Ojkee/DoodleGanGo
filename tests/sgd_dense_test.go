@@ -134,3 +134,6 @@ func TestSGD_Dense_Momentum_1(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestSGD_Dense_Momentum_2(t *testing.T) {
+}
