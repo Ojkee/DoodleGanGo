@@ -21,15 +21,13 @@ type RMSProp struct {
 
 	rootFunc func(i, j int, v float64) float64
 
-	convSquared     map[int]*filterMomentum // key: idx of conv layer in passed architecture
-	denseSquared    map[int]*denseMomentum  // key: idx of dense layer in passed architecture
-	convVelocities  map[int]*filterMomentum // TODO
-	denseVelocities map[int]*denseMomentum  // TODO
+	convSquared  map[int]*filterMomentum // key: idx of conv layer in passed architecture
+	denseSquared map[int]*denseMomentum  // key: idx of dense layer in passed architecture
 
 	lastConvOutputSize conv.MatSize
 }
 
-func NewRMSProp(learningRate, rho, momentum, eps float64) RMSProp {
+func NewRMSProp(learningRate, rho, eps float64) RMSProp {
 	if learningRate <= 0 {
 		panic("NewRMSProp fail:\n\tLearning Rate can't be less or equal 0")
 	}
@@ -44,13 +42,11 @@ func NewRMSProp(learningRate, rho, momentum, eps float64) RMSProp {
 	}
 
 	return RMSProp{
-		learningRate:       learningRate,
-		rho:                rho,
-		rhoComplement:      1.0 - rho,
-		momentum:           momentum,
-		momentumComplement: 1.0 - momentum,
-		eps:                eps,
-		rootFunc:           rootFunc_,
+		learningRate:  learningRate,
+		rho:           rho,
+		rhoComplement: 1.0 - rho,
+		eps:           eps,
+		rootFunc:      rootFunc_,
 	}
 }
 
@@ -66,10 +62,6 @@ func (opt *RMSProp) PreTrainInit(
 	if opt.rho != 0.0 {
 		opt.denseSquared = initDenseVelocities(denseLayers)
 		opt.convSquared = initConvVelocities(convLayers)
-	}
-	if opt.momentum != 0.0 {
-		opt.denseVelocities = initDenseVelocities(denseLayers)
-		opt.convVelocities = initConvVelocities(convLayers)
 	}
 }
 

@@ -3,10 +3,11 @@
 ## List
 
 - Stochastic Gradient Descent (SGD)
+- RMSprop
 
 ## TODO
 
-- RMSprop
+- RMSprop Momentum implementation
 - SGD Nesterov implementation
 - Adam
 - AdamW
