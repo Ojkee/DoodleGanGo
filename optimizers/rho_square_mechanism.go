@@ -85,11 +85,11 @@ func (r *rhoSquareMechanism) zeroRhoActivateDense(grads *mat.Dense) *mat.Dense {
 }
 
 func (r *rhoSquareMechanism) zeroRhoActivateVec(grads *mat.VecDense) *mat.VecDense {
-	var retVal mat.VecDense
+	retVal := mat.NewVecDense(grads.Len(), nil)
 	for i, v := range grads.RawVector().Data {
 		retVal.SetVec(i, r.zeroRhoActivate(&v))
 	}
-	return &retVal
+	return retVal
 }
 
 func (r *rhoSquareMechanism) zeroRhoActivateFloatSlice(grads *[]float64) *[]float64 {
