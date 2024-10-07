@@ -254,7 +254,7 @@ func TestConv2D_All_1(t *testing.T) {
 	}
 	if !reflect.DeepEqual(target, *layer.FlatOutput()) {
 		fmt.Println(target)
-		functools.PrintMatArray(layer.DeflatOutput(), 0)
+		functools.PrintMatSlice(layer.DeflatOutput(), 0)
 		t.Fatal()
 	}
 }
@@ -308,7 +308,7 @@ func TestConv2D_All_2(t *testing.T) {
 	}
 	if !reflect.DeepEqual(target, *layer.FlatOutput()) {
 		fmt.Println(target)
-		functools.PrintMatArray(layer.DeflatOutput(), 0)
+		functools.PrintMatSlice(layer.DeflatOutput(), 0)
 		t.Fatal()
 	}
 }

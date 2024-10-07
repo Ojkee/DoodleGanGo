@@ -7,7 +7,7 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func PrintMatArray(A *[]mat.Dense, precision int) {
+func PrintMatSlice(A *[]mat.Dense, precision int) {
 	precision = max(0, precision)
 	precision = min(52, precision)
 	for i := range len(*A) {
@@ -27,7 +27,27 @@ func PrintMat(A *mat.Dense, precision int) {
 	}
 }
 
-func IsEqualMat(A, B *[]mat.Dense, eps float64) bool {
+func IsEqualMat(A, B *mat.Dense, eps float64) bool {
+	ma, na := A.Dims()
+	mb, nb := B.Dims()
+	if ma != mb || na != nb {
+		return false
+	}
+	var res mat.Dense
+	res.Sub(&(*A), &(*B))
+	m, n := res.Dims()
+	for i := range m {
+		for j := range n {
+			v := math.Abs(res.At(i, j))
+			if v > eps || math.IsNaN(v) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func IsEqualMatSlice(A, B *[]mat.Dense, eps float64) bool {
 	if len(*A) != len(*B) {
 		return false
 	}
@@ -37,7 +57,8 @@ func IsEqualMat(A, B *[]mat.Dense, eps float64) bool {
 		m, n := res.Dims()
 		for i := range m {
 			for j := range n {
-				if math.Abs(res.At(i, j)) > eps {
+				v := math.Abs(res.At(i, j))
+				if v > eps || math.IsNaN(v) {
 					return false
 				}
 			}
@@ -51,7 +72,8 @@ func IsEqualVec(A, B *mat.VecDense, eps float64) bool {
 		return false
 	}
 	for i := range A.Len() {
-		if math.Abs(A.RawVector().Data[i]-B.RawVector().Data[i]) > eps {
+		v := A.RawVector().Data[i] - B.RawVector().Data[i]
+		if math.Abs(v) > eps || math.IsNaN(v) {
 			return false
 		}
 	}
@@ -63,7 +85,8 @@ func IsEqual(A, B *[]float64, eps float64) bool {
 		return false
 	}
 	for i := range *A {
-		if math.Abs((*A)[i]-(*B)[i]) > eps {
+		v := math.Abs((*A)[i] - (*B)[i])
+		if v > eps || math.IsNaN(v) {
 			return false
 		}
 	}
@@ -71,7 +94,7 @@ func IsEqual(A, B *[]float64, eps float64) bool {
 }
 
 func IsEqualVal(A, B *float64, eps float64) bool {
-	if math.Abs(*A-*B) > eps {
+	if math.Abs(*A-*B) > eps || math.IsNaN(*A) || math.IsNaN(*B) {
 		return false
 	}
 	return true

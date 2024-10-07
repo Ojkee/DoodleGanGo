@@ -30,6 +30,7 @@ func newRhoSquareMechanism(rho, eps float64) rhoSquareMechanism {
 		rho:           rho,
 		rhoComplement: 1.0 - rho,
 		rootFunc:      rootFunc_,
+		eps:           eps,
 	}
 }
 
@@ -115,7 +116,7 @@ func (r *rhoSquareMechanism) squareDenseLayerGrads(
 	biasGrads *mat.VecDense,
 ) (mat.Dense, mat.VecDense) {
 	var denseGradsRet mat.Dense
-	denseGrads.MulElem(
+	denseGradsRet.MulElem(
 		denseGrads,
 		denseGrads,
 	)
@@ -156,9 +157,10 @@ func (opt *rhoSquareMechanism) gradsScaleSquaredVec(grads, gradsS *mat.VecDense)
 	for i := range grads.Len() {
 		toSquare := gradsS.AtVec(i)
 		if toSquare == 0.0 {
-			toSquare += opt.eps
+			toSquare = opt.eps
 		}
-		retVal.SetVec(i, grads.AtVec(i)/math.Sqrt(toSquare))
+		v := grads.AtVec(i) / math.Sqrt(toSquare)
+		retVal.SetVec(i, v)
 	}
 	return *retVal
 }

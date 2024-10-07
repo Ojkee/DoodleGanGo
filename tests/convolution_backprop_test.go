@@ -558,14 +558,14 @@ func TestConv2D_Backward_11(t *testing.T) {
 
 	if !reflect.DeepEqual(*filterGrads, targetFilterGrads) {
 		fmt.Println("== FILTER GRADS ==")
-		functools.PrintMatArray(filterGrads, 2)
-		functools.PrintMatArray(&targetFilterGrads, 2)
+		functools.PrintMatSlice(filterGrads, 2)
+		functools.PrintMatSlice(&targetFilterGrads, 2)
 		t.Fail()
 	}
 	if !reflect.DeepEqual(*outGrads, targetOutGrads) {
 		fmt.Println("== OUT GRADS ==")
-		functools.PrintMatArray(outGrads, 2)
-		functools.PrintMatArray(&targetOutGrads, 2)
+		functools.PrintMatSlice(outGrads, 2)
+		functools.PrintMatSlice(&targetOutGrads, 2)
 		t.Fail()
 	}
 	if !reflect.DeepEqual(*biasGrads, targetBiasGrads) {
@@ -613,7 +613,7 @@ func TestConv2D_ApplyGrads_1(t *testing.T) {
 	}
 	targetLayerBias := []float64{-0.225, -0.5, -0.1}
 
-	if !functools.IsEqualMat(&targetLayerFilter, layerFilter, 0.001) {
+	if !functools.IsEqualMatSlice(&targetLayerFilter, layerFilter, 0.001) {
 		fmt.Println("== FILTER ==")
 		fmt.Println(targetLayerFilter)
 		fmt.Println(layerFilter)

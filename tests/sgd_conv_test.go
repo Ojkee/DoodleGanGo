@@ -69,13 +69,13 @@ func TestSGD_Conv_1(t *testing.T) {
 	}
 	target_bias_2 := []float64{-0.75}
 
-	if !functools.IsEqualMat(&target_filter_1, result_filter_1, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_1, result_filter_1, 0.001) {
 		fmt.Println("== I FILTER ==")
 		fmt.Println(&target_filter_1)
 		fmt.Println(result_filter_1)
 		t.Fail()
 	}
-	if !functools.IsEqualMat(&target_filter_2, result_filter_2, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_2, result_filter_2, 0.001) {
 		fmt.Println("== II FILTER ==")
 		fmt.Println(&target_filter_2)
 		fmt.Println(result_filter_2)
@@ -145,19 +145,19 @@ func TestSGD_Conv_2(t *testing.T) {
 	result_bias_2 := conv_2.GetBias()
 	result_bias_3 := conv_3.GetBias()
 
-	if !functools.IsEqualMat(&target_filter_1, result_filter_1, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_1, result_filter_1, 0.001) {
 		fmt.Println("== I FILTER ==")
 		fmt.Println(&target_filter_1)
 		fmt.Println(result_filter_1)
 		t.Fail()
 	}
-	if !functools.IsEqualMat(&target_filter_2, result_filter_2, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_2, result_filter_2, 0.001) {
 		fmt.Println("== II FILTER ==")
 		fmt.Println(&target_filter_2)
 		fmt.Println(result_filter_2)
 		t.Fail()
 	}
-	if !functools.IsEqualMat(&target_filter_3, result_filter_3, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_3, result_filter_3, 0.001) {
 		fmt.Println("== III FILTER ==")
 		fmt.Println(&target_filter_3)
 		fmt.Println(result_filter_3)
@@ -222,10 +222,10 @@ func TestSGD_Conv_3(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{2.15, -1.025, -2, 2.925}),
 	}
 	target_bias := []float64{0.5, -1.1}
-	if !functools.IsEqualMat(&target_filter, result_filter, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter, result_filter, 0.001) {
 		fmt.Println("== FILTER ==")
-		functools.PrintMatArray(&target_filter, 3)
-		functools.PrintMatArray(result_filter, 3)
+		functools.PrintMatSlice(&target_filter, 3)
+		functools.PrintMatSlice(result_filter, 3)
 		t.Fail()
 	}
 	if !functools.IsEqual(&target_bias, result_bias, 0.001) {
@@ -265,10 +265,10 @@ func TestSGD_Conv_4(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{0, 0.5, 1, -3}),
 	}
 	target_bias := []float64{-0.5}
-	if !functools.IsEqualMat(&target_filter, result_filter, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter, result_filter, 0.001) {
 		fmt.Println("== FILTER ==")
-		functools.PrintMatArray(&target_filter, 3)
-		functools.PrintMatArray(result_filter, 3)
+		functools.PrintMatSlice(&target_filter, 3)
+		functools.PrintMatSlice(result_filter, 3)
 		t.Fail()
 	}
 	if !functools.IsEqual(&target_bias, result_bias, 0.001) {
@@ -336,13 +336,13 @@ func TestSGD_Conv_Momentum_1(t *testing.T) {
 	target_bias_1 := []float64{-0.105}
 	target_bias_2 := []float64{-0.005, -0.1}
 
-	if !functools.IsEqualMat(&target_filter_1, result_filter_1, 0.0001) {
+	if !functools.IsEqualMatSlice(&target_filter_1, result_filter_1, 0.0001) {
 		fmt.Println("== I FILTER ==")
 		fmt.Println(&target_filter_1)
 		fmt.Println(result_filter_1)
 		t.Fail()
 	}
-	if !functools.IsEqualMat(&target_filter_2, result_filter_2, 0.0001) {
+	if !functools.IsEqualMatSlice(&target_filter_2, result_filter_2, 0.0001) {
 		fmt.Println("== II FILTER ==")
 		fmt.Println(&target_filter_2)
 		fmt.Println(result_filter_2)
@@ -388,10 +388,10 @@ func TestSGD_Conv_Momentum_2(t *testing.T) {
 	resultBias := convLayer.GetBias()
 	targetBias := []float64{0.71}
 
-	if !functools.IsEqualMat(&targetFilter, resultFilter, 0.001) {
+	if !functools.IsEqualMatSlice(&targetFilter, resultFilter, 0.001) {
 		fmt.Println("== FILTER ==")
-		functools.PrintMatArray(&targetFilter, 4)
-		functools.PrintMatArray(resultFilter, 4)
+		functools.PrintMatSlice(&targetFilter, 4)
+		functools.PrintMatSlice(resultFilter, 4)
 		t.Fail()
 	}
 	if !functools.IsEqual(&targetBias, resultBias, 0.001) {

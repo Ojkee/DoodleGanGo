@@ -28,12 +28,17 @@ func (loss *BinaryCrossEntropy) CalculateTotal(yHat, y *[]mat.VecDense) float64 
 	for i := range loss.batchSizeInt {
 		y_ := (*y)[i].AtVec(0)
 		yHat_ := (*yHat)[i].AtVec(0)
-		if yHat_ == 0 && y_ == 1 {
-			yHat_ = 10e-8
-		} else if yHat_ == 1 && y_ == 0 {
-			yHat_ = 0.99999999
+		if y_ == 0.0 {
+			if yHat_ == 1.0 {
+				yHat_ = 0.99999999
+			}
+			retVal += math.Log(1.0 - yHat_)
+		} else {
+			if yHat_ == 0.0 {
+				yHat_ = 1e-8
+			}
+			retVal += math.Log(yHat_)
 		}
-		retVal += y_*math.Log(yHat_) + (1-y_)*math.Log(1-yHat_)
 	}
 	return -retVal
 }

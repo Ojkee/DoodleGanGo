@@ -145,7 +145,7 @@ func (layer *Conv2D) GetOutputSize() (int, int) {
 }
 
 func (layer *Conv2D) PrintFilter(precision int) {
-	functools.PrintMatArray(&layer.filters, precision)
+	functools.PrintMatSlice(&layer.filters, precision)
 }
 
 func (layer *Conv2D) LoadBias(biases *[]float64) {

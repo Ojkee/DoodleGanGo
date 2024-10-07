@@ -83,7 +83,7 @@ func TestPool_3(t *testing.T) {
 		fmt.Println(*layer.FlatOutput())
 		t.Fatal()
 	}
-	if !functools.IsEqualMat(&targetDeflat, layer.DeflatOutput(), 0.01) {
+	if !functools.IsEqualMatSlice(&targetDeflat, layer.DeflatOutput(), 0.01) {
 		fmt.Println(targetDeflat)
 		fmt.Println(layer.DeflatOutput())
 		t.Fatal()
@@ -104,9 +104,9 @@ func TestPool_Backward_1(t *testing.T) {
 			1.0, 1.0, -1.0 / 4.0, -1.0 / 4.0,
 		}),
 	}
-	if !functools.IsEqualMat(&target, result, 0.001) {
-		functools.PrintMatArray(&target, 2)
-		functools.PrintMatArray(result, 2)
+	if !functools.IsEqualMatSlice(&target, result, 0.001) {
+		functools.PrintMatSlice(&target, 2)
+		functools.PrintMatSlice(result, 2)
 		t.Fail()
 	}
 }
@@ -126,9 +126,9 @@ func TestPool_Backward_2(t *testing.T) {
 			0.0, 0.0, 0.0, 0.0, 0.0,
 		}),
 	}
-	if !functools.IsEqualMat(&target, result, 0.001) {
-		functools.PrintMatArray(&target, 2)
-		functools.PrintMatArray(result, 2)
+	if !functools.IsEqualMatSlice(&target, result, 0.001) {
+		functools.PrintMatSlice(&target, 2)
+		functools.PrintMatSlice(result, 2)
 		t.Fail()
 	}
 }
@@ -154,9 +154,9 @@ func TestPool_Backward_3(t *testing.T) {
 			0, 0, 0, 0,
 		}),
 	}
-	if !functools.IsEqualMat(&target, result, 0.001) {
-		functools.PrintMatArray(&target, 2)
-		functools.PrintMatArray(result, 2)
+	if !functools.IsEqualMatSlice(&target, result, 0.001) {
+		functools.PrintMatSlice(&target, 2)
+		functools.PrintMatSlice(result, 2)
 		t.Fail()
 	}
 }

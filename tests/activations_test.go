@@ -61,7 +61,7 @@ func TestLeakyReLU(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{1, -1.0 * 0.1, -888.0 * 0.1, 0}),
 		*mat.NewDense(2, 2, []float64{-3.0 * 0.1, -4.0 * 0.1, -5.0 * 0.1, 2}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		t.Fatal()
 	}
 }
@@ -83,7 +83,7 @@ func TestLeakyReLU_Backward(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{1, 0.1, 0.1, 0.1}),
 		*mat.NewDense(2, 2, []float64{0.1, 0.2, 0.3, 4}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		fmt.Println(output)
 		fmt.Println(target)
 		t.Fatal()
@@ -101,7 +101,7 @@ func TestELU(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{1, -0.316060279, 0, 10}),
 		*mat.NewDense(2, 2, []float64{-0.432332358, 0.1, -0.4999773, -0.047581291}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		t.Fatal()
 	}
 }
@@ -123,7 +123,7 @@ func TestELU_Backward(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{1, 0.09196986, 0.25, 1}),
 		*mat.NewDense(2, 2, []float64{0.012446767 * 1, 0.00457891 * 2, 0.001684487 * 3, 1 * 4}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		fmt.Println(output)
 		fmt.Println(target)
 		t.Fatal()
@@ -141,7 +141,7 @@ func TestSigmoid(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{0.119202922, 0.268941421, 0.731058579, 0.880797078}),
 		*mat.NewDense(2, 2, []float64{0, 1, 0.5, 0.997524909}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		t.Fatal()
 	}
 }
@@ -162,7 +162,7 @@ func TestSigmoid_Backward(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{0.104993585, 0.196611933, 0.196611933, 0.104993585}),
 		*mat.NewDense(2, 2, []float64{0, 0, 0.75, 0.002468965 * 4}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		fmt.Println(output)
 		fmt.Println(target)
 		t.Fatal()
@@ -180,7 +180,7 @@ func TestTanh(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{-0.96402758007, -0.76159415595, 0.76159415595, 0.96402758007}),
 		*mat.NewDense(2, 2, []float64{-1, 1, 0, 0.99998768705}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		t.Fatal()
 	}
 }
@@ -201,7 +201,7 @@ func TestTanh_Backward(t *testing.T) {
 		*mat.NewDense(2, 2, []float64{0.070650825, 0.419974342, 0.419974342, 0.070650825}),
 		*mat.NewDense(2, 2, []float64{0, 0, 3, 0.000024626 * 4}),
 	}
-	if !functools.IsEqualMat(output, &target, 0.001) {
+	if !functools.IsEqualMatSlice(output, &target, 0.001) {
 		fmt.Println(output)
 		fmt.Println(target)
 		t.Fatal()
