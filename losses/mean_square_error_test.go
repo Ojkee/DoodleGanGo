@@ -1,4 +1,4 @@
-package tests
+package losses_test
 
 import (
 	"fmt"

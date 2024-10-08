@@ -11,14 +11,19 @@ type momentumMechanism struct {
 	momentum           float64
 	momentumComplement float64
 
-	convVelocities  map[int]*filterMomentum // key: idx of conv layer in passed architecture
-	denseVelocities map[int]*denseMomentum  // key: idx of dense layer in passed architecture
+	velocityCorrection correctionMechanism
+	convVelocities     map[int]*filterMomentum // key: idx of conv layer in passed architecture
+	denseVelocities    map[int]*denseMomentum  // key: idx of dense layer in passed architecture
 }
 
 func newMomentumMechanism(momentum float64) momentumMechanism {
 	return momentumMechanism{
 		momentum:           momentum,
 		momentumComplement: 1.0 - momentum,
+		velocityCorrection: correctionMechanism{
+			decay:  momentum,
+			decayT: momentum,
+		},
 	}
 }
 

@@ -15,8 +15,9 @@ type rhoSquareMechanism struct {
 	eps           float64
 	rootFunc      func(i, j int, v float64) float64
 
-	denseSquared map[int]*denseMomentum  // key: idx of dense layer in passed architecture
-	convSquared  map[int]*filterMomentum // key: idx of conv layer in passed architecture
+	rhoCorrection correctionMechanism
+	denseSquared  map[int]*denseMomentum  // key: idx of dense layer in passed architecture
+	convSquared   map[int]*filterMomentum // key: idx of conv layer in passed architecture
 }
 
 func newRhoSquareMechanism(rho, eps float64) rhoSquareMechanism {
@@ -31,6 +32,10 @@ func newRhoSquareMechanism(rho, eps float64) rhoSquareMechanism {
 		rhoComplement: 1.0 - rho,
 		rootFunc:      rootFunc_,
 		eps:           eps,
+		rhoCorrection: correctionMechanism{
+			decay:  rho,
+			decayT: rho,
+		},
 	}
 }
 
@@ -110,7 +115,7 @@ func (r *rhoSquareMechanism) zeroRhoActivateDenseSlice(grads *[]mat.Dense) *[]ma
 	return &retVal
 }
 
-// TODO Preallocate space for squared grads instead of allocating every opt step
+// TODO Preallocate space for squared grads instead of allocating every r step
 func (r *rhoSquareMechanism) squareDenseLayerGrads(
 	denseGrads *mat.Dense,
 	biasGrads *mat.VecDense,
@@ -128,7 +133,7 @@ func (r *rhoSquareMechanism) squareDenseLayerGrads(
 	return denseGradsRet, vecBiasGradsRet
 }
 
-// TODO Preallocate space for squared grads instead of allocating every opt step
+// TODO Preallocate space for squared grads instead of allocating every r step
 func (r *rhoSquareMechanism) squareConvLayerGrads(
 	convGrads *[]mat.Dense,
 	biasGrads *[]float64,
@@ -144,20 +149,20 @@ func (r *rhoSquareMechanism) squareConvLayerGrads(
 	return convGradsRet, convBiasRet
 }
 
-func (opt *rhoSquareMechanism) gradsScaleSquaredDense(grads, gradsS *mat.Dense) mat.Dense {
+func (r *rhoSquareMechanism) gradsScaleSquaredDense(grads, gradsS *mat.Dense) mat.Dense {
 	var rootedS mat.Dense
-	rootedS.Apply(opt.rootFunc, gradsS)
+	rootedS.Apply(r.rootFunc, gradsS)
 	var retVal mat.Dense
 	retVal.DivElem(grads, &rootedS)
 	return retVal
 }
 
-func (opt *rhoSquareMechanism) gradsScaleSquaredVec(grads, gradsS *mat.VecDense) mat.VecDense {
+func (r *rhoSquareMechanism) gradsScaleSquaredVec(grads, gradsS *mat.VecDense) mat.VecDense {
 	retVal := mat.NewVecDense(grads.Len(), nil)
 	for i := range grads.Len() {
 		toSquare := gradsS.AtVec(i)
 		if toSquare == 0.0 {
-			toSquare = opt.eps
+			toSquare = r.eps
 		}
 		v := grads.AtVec(i) / math.Sqrt(toSquare)
 		retVal.SetVec(i, v)
@@ -165,20 +170,20 @@ func (opt *rhoSquareMechanism) gradsScaleSquaredVec(grads, gradsS *mat.VecDense)
 	return *retVal
 }
 
-func (opt *rhoSquareMechanism) gradsScaleSquaredConv(grads, gradsS *[]mat.Dense) []mat.Dense {
+func (r *rhoSquareMechanism) gradsScaleSquaredConv(grads, gradsS *[]mat.Dense) []mat.Dense {
 	retVal := make([]mat.Dense, len(*grads))
 	for i := range retVal {
-		retVal[i] = opt.gradsScaleSquaredDense(&(*grads)[i], &(*gradsS)[i])
+		retVal[i] = r.gradsScaleSquaredDense(&(*grads)[i], &(*gradsS)[i])
 	}
 	return retVal
 }
 
-func (opt *rhoSquareMechanism) gradsScaleSquaredFloatSlice(grads, gradsS *[]float64) []float64 {
+func (r *rhoSquareMechanism) gradsScaleSquaredFloatSlice(grads, gradsS *[]float64) []float64 {
 	retVal := make([]float64, len(*grads))
 	for i := range retVal {
 		toSquare := (*gradsS)[i]
 		if toSquare == 0.0 {
-			toSquare += opt.eps
+			toSquare += r.eps
 		}
 		retVal[i] = (*grads)[i] / math.Sqrt(toSquare)
 	}

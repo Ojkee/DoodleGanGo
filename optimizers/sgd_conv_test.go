@@ -1,4 +1,4 @@
-package tests
+package optimizers_test
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"DoodleGan/optimizers"
 )
 
-func TestRMSProp_Conv_1(t *testing.T) {
+func TestSGD_Conv_1(t *testing.T) {
 	convLayer_1 := conv.NewConv2D(
 		[2]int{3, 3},
 		1,
@@ -50,7 +50,7 @@ func TestRMSProp_Conv_1(t *testing.T) {
 	convLayer_2.Forward(convLayer_1.DeflatOutput())
 
 	outHeight, outWidth := convLayer_2.GetOutputSize()
-	optimizer := optimizers.NewRMSProp(0.5, 0.0, 10e-8)
+	optimizer := optimizers.NewSGD(0.5, 0.0)
 	convLayers := []conv.ConvLayer{&convLayer_1, &convLayer_2}
 	optimizer.PreTrainInit([2]int{outHeight, outWidth}, &convLayers, &[]layers.Layer{})
 	vec_grad := mat.NewVecDense(4, []float64{1, 0.5, -1, 1})
@@ -61,13 +61,13 @@ func TestRMSProp_Conv_1(t *testing.T) {
 	result_filter_2 := convLayer_2.GetFilter()
 	result_bias_2 := convLayer_2.GetBias()
 	target_filter_1 := []mat.Dense{
-		*mat.NewDense(3, 3, []float64{1.5, 1.5, -0.5, 0.5, 2.5, 1.5, 0.5, 0.5, 2.5}),
+		*mat.NewDense(3, 3, []float64{-0.75, 14.25, -12.25, -13.5, 9.5, 6, 2.25, -9.75, 3.75}),
 	}
 	target_bias_1 := []float64{1}
 	target_filter_2 := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{1.5, -3.5, 0.5, 1.5}),
+		*mat.NewDense(2, 2, []float64{7.75, -4.75, -9.5, 5.5}),
 	}
-	target_bias_2 := []float64{-0.5}
+	target_bias_2 := []float64{-0.75}
 
 	if !functools.IsEqualMatSlice(&target_filter_1, result_filter_1, 0.001) {
 		fmt.Println("== I FILTER ==")
@@ -95,7 +95,7 @@ func TestRMSProp_Conv_1(t *testing.T) {
 	}
 }
 
-func TestRMSProp_Conv_2(t *testing.T) {
+func TestSGD_Conv_2(t *testing.T) {
 	conv_1 := conv.NewConv2D([2]int{2, 2}, 1, [2]int{3, 3}, 1, [2]int{1, 1}, [4]int{0, 0, 0, 0})
 	filter_1 := []float64{2, 1, 4, 1}
 	conv_1.LoadFilter(&filter_1)
@@ -118,7 +118,7 @@ func TestRMSProp_Conv_2(t *testing.T) {
 	conv_3.Forward(activated_2)
 
 	outHeight, outWidth := conv_3.GetOutputSize()
-	optimizer := optimizers.NewRMSProp(0.1, 0.0, 10e-8)
+	optimizer := optimizers.NewSGD(0.1, 0.0)
 	convLayers := []conv.ConvLayer{&conv_1, &act_1, &conv_2, &act_2, &conv_3}
 	optimizer.PreTrainInit([2]int{outHeight, outWidth}, &convLayers, &[]layers.Layer{})
 
@@ -126,17 +126,17 @@ func TestRMSProp_Conv_2(t *testing.T) {
 	optimizer.BackwardConv2DLayers(&convLayers, vec_grad)
 
 	target_filter_1 := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{2.1, 0.9, 4.1, 0.9}),
+		*mat.NewDense(2, 2, []float64{2.6, 0.98, 5.1, 0.48}),
 	}
 	target_filter_2 := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{1.1, -1.9, 0.1, 1.1}),
+		*mat.NewDense(2, 2, []float64{4.6, -1.82, 0.78, 2.82}),
 	}
 	target_filter_3 := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{1.1, 2, 0.9, 2.1}),
+		*mat.NewDense(2, 2, []float64{2.8, 2, 0.66, 3.8}),
 	}
-	target_bias_1 := []float64{0.1}
-	target_bias_2 := []float64{0.1}
-	target_bias_3 := []float64{0.1}
+	target_bias_1 := []float64{0.58}
+	target_bias_2 := []float64{0.66}
+	target_bias_3 := []float64{0.2}
 
 	result_filter_1 := conv_1.GetFilter()
 	result_filter_2 := conv_2.GetFilter()
@@ -183,7 +183,7 @@ func TestRMSProp_Conv_2(t *testing.T) {
 	}
 }
 
-func TestRMSProp_Conv_3(t *testing.T) {
+func TestSGD_Conv_3(t *testing.T) {
 	conv_1 := conv.NewConv2D([2]int{2, 2}, 2, [2]int{4, 4}, 2, [2]int{2, 2}, [4]int{0, 0, 0, 0})
 	filter := []float64{
 		3, 3, 0, -1, 2, 2, 1, 2,
@@ -209,19 +209,19 @@ func TestRMSProp_Conv_3(t *testing.T) {
 
 	cnn := []conv.ConvLayer{&conv_1, &pool_1, &act_1}
 	grads := mat.NewVecDense(2, []float64{1, 2})
-	optimizer := optimizers.NewRMSProp(0.5, 0.0, 10e-8)
+	optimizer := optimizers.NewSGD(0.5, 0.0)
 	optimizer.PreTrainInit([2]int{1, 1}, &cnn, &[]layers.Layer{})
 	optimizer.BackwardConv2DLayers(&cnn, grads)
 
 	result_filter := conv_1.GetFilter()
 	result_bias := conv_1.GetBias()
 	target_filter := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{2.5, 2.5, -0.5, -1.5}),
-		*mat.NewDense(2, 2, []float64{2.5, 1.5, 1., 1.5}),
-		*mat.NewDense(2, 2, []float64{0.5, -1.5, -2.5, -0.5}),
-		*mat.NewDense(2, 2, []float64{2.5, -1.5, -2, 2.5}),
+		*mat.NewDense(2, 2, []float64{2.125, 2.5, -0.25, -1.5}),
+		*mat.NewDense(2, 2, []float64{2.75, 1.875, 1, 1.625}),
+		*mat.NewDense(2, 2, []float64{0.825, -1.1, -2.05, -0.1}),
+		*mat.NewDense(2, 2, []float64{2.15, -1.025, -2, 2.925}),
 	}
-	target_bias := []float64{0.5, -1.5}
+	target_bias := []float64{0.5, -1.1}
 	if !functools.IsEqualMatSlice(&target_filter, result_filter, 0.001) {
 		fmt.Println("== FILTER ==")
 		functools.PrintMatSlice(&target_filter, 3)
@@ -236,7 +236,7 @@ func TestRMSProp_Conv_3(t *testing.T) {
 	}
 }
 
-func TestRMSProp_Conv_4(t *testing.T) {
+func TestSGD_Conv_4(t *testing.T) {
 	conv_1 := conv.NewConv2D([2]int{2, 2}, 1, [2]int{3, 3}, 2, [2]int{1, 1}, [4]int{0, 0, 0, 0})
 	filter := []float64{
 		1, 2, -1, -2,
@@ -254,17 +254,17 @@ func TestRMSProp_Conv_4(t *testing.T) {
 
 	cnn := []conv.ConvLayer{&conv_1, &pool}
 	grads := mat.NewVecDense(1, []float64{5})
-	optimizer := optimizers.NewRMSProp(0.1, 0.0, 10e-8)
+	optimizer := optimizers.NewSGD(0.1, 0.0)
 	optimizer.PreTrainInit([2]int{1, 1}, &cnn, &[]layers.Layer{})
 	optimizer.BackwardConv2DLayers(&cnn, grads)
 
 	result_filter := conv_1.GetFilter()
 	result_bias := conv_1.GetBias()
 	target_filter := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{0.9, 1.9, -1.1, -2}),
-		*mat.NewDense(2, 2, []float64{0, 1.9, 1.9, -3.9}),
+		*mat.NewDense(2, 2, []float64{0, 0.5, -1.5, -2}),
+		*mat.NewDense(2, 2, []float64{0, 0.5, 1, -3}),
 	}
-	target_bias := []float64{-0.1}
+	target_bias := []float64{-0.5}
 	if !functools.IsEqualMatSlice(&target_filter, result_filter, 0.001) {
 		fmt.Println("== FILTER ==")
 		functools.PrintMatSlice(&target_filter, 3)
@@ -279,7 +279,7 @@ func TestRMSProp_Conv_4(t *testing.T) {
 	}
 }
 
-func TestRMSProp_Conv_Rho_1(t *testing.T) {
+func TestSGD_Conv_Momentum_1(t *testing.T) {
 	convLayer_1 := conv.NewConv2D(
 		[2]int{2, 2},
 		1,
@@ -314,7 +314,7 @@ func TestRMSProp_Conv_Rho_1(t *testing.T) {
 	act_2.Forward(convLayer_2.DeflatOutput())
 
 	outHeight, outWidth := convLayer_2.GetOutputSize()
-	optimizer := optimizers.NewRMSProp(0.1, 0.5, 10e-8)
+	optimizer := optimizers.NewSGD(0.1, 0.5)
 	convLayers := []conv.ConvLayer{&convLayer_1, &act_1, &convLayer_2, &act_2}
 	optimizer.PreTrainInit([2]int{outHeight, outWidth}, &convLayers, &[]layers.Layer{})
 	vec_grad := mat.NewVecDense(2, []float64{1, 2})
@@ -323,29 +323,29 @@ func TestRMSProp_Conv_Rho_1(t *testing.T) {
 	result_filter_1 := convLayer_1.GetFilter()
 	result_filter_2 := convLayer_2.GetFilter()
 	target_filter_1 := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{0.8585, 2, 3.1414, 3.8585}),
-		*mat.NewDense(2, 2, []float64{-4.1414, 2, -3.8585, 1.8585}),
-		*mat.NewDense(2, 2, []float64{1.8585, -2, 2.1414, 1.8585}),
+		*mat.NewDense(2, 2, []float64{0.97, 2, 3.2, 3.62}),
+		*mat.NewDense(2, 2, []float64{-4.0075, 2, -3.95, 1.905}),
+		*mat.NewDense(2, 2, []float64{1.955, -2, 2.3, 1.43}),
 	}
 	target_filter_2 := []mat.Dense{
-		*mat.NewDense(2, 2, []float64{-2.1414, -0.1414, 1, 2.8585}),
-		*mat.NewDense(2, 2, []float64{1.8585, -1.1414, 2, -0.1414}),
+		*mat.NewDense(2, 2, []float64{-2.075, -0.05, 1, 2.97}),
+		*mat.NewDense(2, 2, []float64{0.5, -2, 2, -0.6}),
 	}
 	result_bias_1 := convLayer_1.GetBias()
 	result_bias_2 := convLayer_2.GetBias()
-	target_bias_1 := []float64{-0.1414}
-	target_bias_2 := []float64{-0.1414, -0.1414}
+	target_bias_1 := []float64{-0.105}
+	target_bias_2 := []float64{-0.005, -0.1}
 
-	if !functools.IsEqualMatSlice(&target_filter_1, result_filter_1, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_1, result_filter_1, 0.0001) {
 		fmt.Println("== I FILTER ==")
-		functools.PrintMatSlice(&target_filter_1, 3)
-		functools.PrintMatSlice(result_filter_1, 3)
+		fmt.Println(&target_filter_1)
+		fmt.Println(result_filter_1)
 		t.Fail()
 	}
-	if !functools.IsEqualMatSlice(&target_filter_2, result_filter_2, 0.001) {
+	if !functools.IsEqualMatSlice(&target_filter_2, result_filter_2, 0.0001) {
 		fmt.Println("== II FILTER ==")
-		functools.PrintMatSlice(&target_filter_2, 3)
-		functools.PrintMatSlice(result_filter_2, 3)
+		fmt.Println(&target_filter_2)
+		fmt.Println(result_filter_2)
 		t.Fail()
 	}
 	if !functools.IsEqual(&target_bias_1, result_bias_1, 0.0001) {
@@ -362,7 +362,7 @@ func TestRMSProp_Conv_Rho_1(t *testing.T) {
 	}
 }
 
-func TestRMSProp_Conv_Rho_2(t *testing.T) {
+func TestSGD_Conv_Momentum_2(t *testing.T) {
 	convLayer := conv.NewConv2D([2]int{2, 2}, 1, [2]int{2, 2}, 1, [2]int{1, 1}, [4]int{0, 0, 0, 0})
 	filter := []float64{2, 0, 2, -1}
 	convLayer.LoadFilter(&filter)
@@ -370,7 +370,7 @@ func TestRMSProp_Conv_Rho_2(t *testing.T) {
 	convLayer.LoadBias(&bias)
 	convLayers := []conv.ConvLayer{&convLayer}
 
-	optimizer := optimizers.NewRMSProp(0.5, 0.9, 10e-8)
+	optimizer := optimizers.NewSGD(0.5, 0.9)
 	optimizer.PreTrainInit([2]int{1, 1}, &convLayers, &[]layers.Layer{})
 
 	input1 := []mat.Dense{*mat.NewDense(2, 2, []float64{1, -1, 2, -3})}
@@ -384,9 +384,9 @@ func TestRMSProp_Conv_Rho_2(t *testing.T) {
 	optimizer.BackwardConv2DLayers(&convLayers, grad2)
 
 	resultFilter := convLayer.GetFilter()
-	targetFilter := []mat.Dense{*mat.NewDense(2, 2, []float64{-1.0097, 3.0096, -0.3184, 1.7281})}
+	targetFilter := []mat.Dense{*mat.NewDense(2, 2, []float64{1.61, 0.39, 1.52, -0.13})}
 	resultBias := convLayer.GetBias()
-	targetBias := []float64{-1.7282}
+	targetBias := []float64{0.71}
 
 	if !functools.IsEqualMatSlice(&targetFilter, resultFilter, 0.001) {
 		fmt.Println("== FILTER ==")

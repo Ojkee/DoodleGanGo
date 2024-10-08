@@ -18,12 +18,9 @@ type RMSProp struct {
 }
 
 func NewRMSProp(learningRate, rho, eps float64) RMSProp {
-	if learningRate <= 0 {
-		panic("NewRMSProp fail:\n\tLearning Rate can't be less or equal 0")
-	}
-	if rho < 0 || rho > 1 {
-		panic("NewRMSProp fail:\n\trho must be in range [0, 1)")
-	}
+	checkValidLearningRate(&learningRate, "NewRMSProp")
+	checkValidRho(&rho, "NewRMSProp")
+	checkValidEps(&eps, "NewRMSProp")
 	return RMSProp{
 		learningRate:       learningRate,
 		rhoSquareMechanism: newRhoSquareMechanism(rho, eps),
@@ -56,11 +53,11 @@ func (opt *RMSProp) BackwardDenseLayers(denses *[]layers.Layer, loss *mat.VecDen
 					opt.zeroRhoActivateVec(trainableLayer.GetOutBiasGrads()),
 				)
 			} else {
-				denseGradsSquared, vecBiasGradsSquared := opt.squareDenseLayerGrads(
+				dw2, db2 := opt.squareDenseLayerGrads(
 					trainableLayer.GetOutWeightsGrads(),
 					trainableLayer.GetOutBiasGrads(),
 				)
-				opt.rhoUpdateDense(i, &denseGradsSquared, &vecBiasGradsSquared)
+				opt.rhoUpdateDense(i, &dw2, &db2)
 				scaledGrads := opt.gradsScaleSquaredDense(
 					trainableLayer.GetOutWeightsGrads(),
 					opt.getRhoSquareDenseWeights(i),

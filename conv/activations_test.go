@@ -1,4 +1,4 @@
-package tests
+package conv_test
 
 import (
 	"fmt"

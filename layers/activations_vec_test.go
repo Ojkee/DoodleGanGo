@@ -1,4 +1,4 @@
-package tests
+package layers_test
 
 import (
 	"fmt"

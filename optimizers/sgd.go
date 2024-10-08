@@ -18,12 +18,8 @@ type SGD struct {
 }
 
 func NewSGD(learningRate, momentum float64) SGD {
-	if learningRate <= 0 {
-		panic("NewSGD fail:\n\tLearning Rate can't be less or equal 0")
-	}
-	if momentum < 0 || momentum > 1 {
-		panic("NewSGD fail:\n\tMomentum must be in range [0, 1)")
-	}
+	checkValidLearningRate(&learningRate, "NewSDG")
+	checkValidMomentum(&momentum, "NewSGD")
 	return SGD{
 		learningRate:      learningRate,
 		momentumMechanism: newMomentumMechanism(momentum),

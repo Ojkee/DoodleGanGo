@@ -1,4 +1,4 @@
-package tests
+package losses_test
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"DoodleGan/losses"
 )
 
-func TestRMSE_1(t *testing.T) {
-	loss := losses.NewRootMeanSquareError(1, 3)
+func TestMAE_1(t *testing.T) {
+	loss := losses.NewMeanAbsoluteError(1, 3)
 	yHat := []mat.VecDense{
 		*mat.NewVecDense(3, []float64{0.57, 0.20, 0.23}),
 	}
@@ -20,8 +20,8 @@ func TestRMSE_1(t *testing.T) {
 	}
 	result := loss.CalculateAvg(&yHat, &y)
 	resultTotal := loss.CalculateTotal(&yHat, &y)
-	target := float64(0.3043)
-	targetTotal := float64(0.3043)
+	target := float64(0.2867)
+	targetTotal := float64(0.2867)
 	if !functools.IsEqualVal(&target, &result, 0.001) {
 		fmt.Println(target)
 		fmt.Println(result)
@@ -34,8 +34,8 @@ func TestRMSE_1(t *testing.T) {
 	}
 }
 
-func TestRMSE_2(t *testing.T) {
-	loss := losses.NewRootMeanSquareError(3, 3)
+func TestMAE_2(t *testing.T) {
+	loss := losses.NewMeanAbsoluteError(3, 3)
 	yHat := []mat.VecDense{
 		*mat.NewVecDense(3, []float64{0.57, 0.20, 0.23}),
 		*mat.NewVecDense(3, []float64{0.22, 0.20, 0.58}),
@@ -48,8 +48,8 @@ func TestRMSE_2(t *testing.T) {
 	}
 	result := loss.CalculateAvg(&yHat, &y)
 	resultTotal := loss.CalculateTotal(&yHat, &y)
-	target := float64(0.3136)
-	targetTotal := float64(0.9408)
+	target := float64(0.29555)
+	targetTotal := float64(0.88666)
 	if !functools.IsEqualVal(&target, &result, 0.001) {
 		fmt.Println(target)
 		fmt.Println(result)

@@ -1,4 +1,4 @@
-package tests
+package losses_test
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"DoodleGan/losses"
 )
 
-func TestCE_1(t *testing.T) {
-	loss := losses.NewCrossEntropy(1, 3)
+func TestRSS_1(t *testing.T) {
+	loss := losses.NewResidualSumOfSquares(1, 3)
 	yHat := []mat.VecDense{
 		*mat.NewVecDense(3, []float64{0.57, 0.20, 0.23}),
 	}
@@ -20,22 +20,22 @@ func TestCE_1(t *testing.T) {
 	}
 	result := loss.CalculateAvg(&yHat, &y)
 	resultTotal := loss.CalculateTotal(&yHat, &y)
-	target := float64(0.56)
-	targetTotal := float64(0.56)
-	if !functools.IsEqualVal(&target, &result, 0.01) {
+	target := float64(0.2778)
+	targetTotal := float64(0.2778)
+	if !functools.IsEqualVal(&target, &result, 0.001) {
 		fmt.Println(target)
 		fmt.Println(result)
 		t.Fail()
 	}
-	if !functools.IsEqualVal(&targetTotal, &resultTotal, 0.01) {
+	if !functools.IsEqualVal(&targetTotal, &resultTotal, 0.001) {
 		fmt.Println(targetTotal)
 		fmt.Println(resultTotal)
 		t.Fail()
 	}
 }
 
-func TestCE_2(t *testing.T) {
-	loss := losses.NewCrossEntropy(3, 3)
+func TestRSS_2(t *testing.T) {
+	loss := losses.NewResidualSumOfSquares(3, 3)
 	yHat := []mat.VecDense{
 		*mat.NewVecDense(3, []float64{0.57, 0.20, 0.23}),
 		*mat.NewVecDense(3, []float64{0.22, 0.20, 0.58}),
@@ -48,14 +48,14 @@ func TestCE_2(t *testing.T) {
 	}
 	result := loss.CalculateAvg(&yHat, &y)
 	resultTotal := loss.CalculateTotal(&yHat, &y)
-	target := float64(0.5833)
-	targetTotal := float64(1.75)
-	if !functools.IsEqualVal(&target, &result, 0.01) {
+	target := float64(0.2960)
+	targetTotal := float64(0.8882)
+	if !functools.IsEqualVal(&target, &result, 0.001) {
 		fmt.Println(target)
 		fmt.Println(result)
 		t.Fail()
 	}
-	if !functools.IsEqualVal(&targetTotal, &resultTotal, 0.011) {
+	if !functools.IsEqualVal(&targetTotal, &resultTotal, 0.001) {
 		fmt.Println(targetTotal)
 		fmt.Println(resultTotal)
 		t.Fail()

@@ -7,6 +7,9 @@
 
 ## TODO
 
+- Refactor momentum Mechanism to vMechanism 
+- Refactor rho square Mechanism to sMechanism 
+
 - RMSprop Momentum implementation
 - SGD Nesterov implementation
 - Adam
