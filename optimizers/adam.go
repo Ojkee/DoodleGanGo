@@ -18,7 +18,7 @@ type Adam struct {
 	lastConvOutputSize conv.MatSize
 }
 
-func NewAdam(learningRate, rho, momentum, eps float64) Adam {
+func NewAdam(learningRate, momentum, rho, eps float64) Adam {
 	checkValidLearningRate(&learningRate, "NewAdam")
 	checkValidMomentum(&momentum, "NewAdam")
 	checkValidRho(&rho, "NewAdam")
