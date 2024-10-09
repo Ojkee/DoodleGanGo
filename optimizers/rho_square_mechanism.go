@@ -23,7 +23,7 @@ type rhoSquareMechanism struct {
 func newRhoSquareMechanism(rho, eps float64) rhoSquareMechanism {
 	rootFunc_ := func(i, j int, v float64) float64 {
 		if v == 0.0 {
-			v += eps
+			return math.Sqrt(v) + eps
 		}
 		return math.Sqrt(v)
 	}
@@ -149,43 +149,43 @@ func (r *rhoSquareMechanism) squareConvLayerGrads(
 	return convGradsRet, convBiasRet
 }
 
-func (r *rhoSquareMechanism) gradsScaleSquaredDense(grads, gradsS *mat.Dense) mat.Dense {
+func (r *rhoSquareMechanism) gradsScaleSquaredDense(dw, dw2 *mat.Dense) mat.Dense {
 	var rootedS mat.Dense
-	rootedS.Apply(r.rootFunc, gradsS)
+	rootedS.Apply(r.rootFunc, dw2)
 	var retVal mat.Dense
-	retVal.DivElem(grads, &rootedS)
+	retVal.DivElem(dw, &rootedS)
 	return retVal
 }
 
-func (r *rhoSquareMechanism) gradsScaleSquaredVec(grads, gradsS *mat.VecDense) mat.VecDense {
-	retVal := mat.NewVecDense(grads.Len(), nil)
-	for i := range grads.Len() {
-		toSquare := gradsS.AtVec(i)
+func (r *rhoSquareMechanism) gradsScaleSquaredVec(dw, dw2 *mat.VecDense) mat.VecDense {
+	retVal := mat.NewVecDense(dw.Len(), nil)
+	for i := range dw.Len() {
+		toSquare := dw2.AtVec(i)
 		if toSquare == 0.0 {
 			toSquare = r.eps
 		}
-		v := grads.AtVec(i) / math.Sqrt(toSquare)
+		v := dw.AtVec(i) / math.Sqrt(toSquare)
 		retVal.SetVec(i, v)
 	}
 	return *retVal
 }
 
-func (r *rhoSquareMechanism) gradsScaleSquaredConv(grads, gradsS *[]mat.Dense) []mat.Dense {
-	retVal := make([]mat.Dense, len(*grads))
+func (r *rhoSquareMechanism) gradsScaleSquaredConv(dw, dw2 *[]mat.Dense) []mat.Dense {
+	retVal := make([]mat.Dense, len(*dw))
 	for i := range retVal {
-		retVal[i] = r.gradsScaleSquaredDense(&(*grads)[i], &(*gradsS)[i])
+		retVal[i] = r.gradsScaleSquaredDense(&(*dw)[i], &(*dw2)[i])
 	}
 	return retVal
 }
 
-func (r *rhoSquareMechanism) gradsScaleSquaredFloatSlice(grads, gradsS *[]float64) []float64 {
-	retVal := make([]float64, len(*grads))
+func (r *rhoSquareMechanism) gradsScaleSquaredFloatSlice(dw, dw2 *[]float64) []float64 {
+	retVal := make([]float64, len(*dw))
 	for i := range retVal {
-		toSquare := (*gradsS)[i]
+		toSquare := (*dw2)[i]
 		if toSquare == 0.0 {
 			toSquare += r.eps
 		}
-		retVal[i] = (*grads)[i] / math.Sqrt(toSquare)
+		retVal[i] = (*dw)[i] / math.Sqrt(toSquare)
 	}
 	return retVal
 }

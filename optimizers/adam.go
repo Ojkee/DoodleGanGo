@@ -123,6 +123,7 @@ func (opt *Adam) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *mat
 				opt.momentumUpdateConv(i, dw, db)
 				dwCorrected := opt.velocityCorrection.correctedDenseSlice(opt.getMomentumConvWeigts(i))
 				dbCorrected := opt.velocityCorrection.correctedFloatSlice(opt.getMomentumConvBias(i))
+				// TODO Fix Bugs below
 				dwScaled := opt.gradsScaleSquaredConv(&dwCorrected, dw)
 				dbScaled := opt.gradsScaleSquaredFloatSlice(&dbCorrected, db)
 				trainableLayer.ApplyGrads(&opt.learningRate, &dwScaled, &dbScaled)
@@ -141,5 +142,14 @@ func (opt *Adam) BackwardConv2DLayers(convs2D *[]conv.ConvLayer, denseGrads *mat
 				trainableLayer.ApplyGrads(&opt.learningRate, &dwScaled, &dbScaled)
 			}
 		}
+	}
+}
+
+func (opt *Adam) UpdateCorrectionDecay() {
+	if opt.momentum != 0 {
+		opt.velocityCorrection.updateDecayT()
+	}
+	if opt.rho != 0 {
+		opt.rhoCorrection.updateDecayT()
 	}
 }

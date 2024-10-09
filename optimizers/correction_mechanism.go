@@ -1,6 +1,8 @@
 package optimizers
 
-import "gonum.org/v1/gonum/mat"
+import (
+	"gonum.org/v1/gonum/mat"
+)
 
 type correctionType interface {
 	correctedDense(dw *mat.Dense) mat.Dense
@@ -25,7 +27,6 @@ func (c *correctionMechanism) scaleFraction() float64 {
 func (c *correctionMechanism) correctedDense(dw *mat.Dense) mat.Dense {
 	var retVal mat.Dense
 	retVal.Scale(c.scaleFraction(), dw)
-	c.updateDecayT()
 	return retVal
 }
 
@@ -35,7 +36,6 @@ func (c *correctionMechanism) correctedDenseSlice(dw *[]mat.Dense) []mat.Dense {
 	for i, dChannel := range *dw {
 		retVal[i].Scale(cScaleFraction, &dChannel)
 	}
-	c.updateDecayT()
 	return retVal
 }
 
@@ -43,7 +43,6 @@ func (c correctionMechanism) correctedVecDense(db *mat.VecDense) mat.VecDense {
 	var retVal mat.VecDense
 	cScaleFraction := c.scaleFraction()
 	retVal.ScaleVec(cScaleFraction, db)
-	c.updateDecayT()
 	return retVal
 }
 
